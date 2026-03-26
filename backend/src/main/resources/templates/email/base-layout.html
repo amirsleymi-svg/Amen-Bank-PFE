@@ -1,0 +1,45 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org" lang="fr">
+<head>
+<meta charset="UTF-8"/>
+<meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+<title>Amen Bank</title>
+<style>
+  body{margin:0;padding:0;background:#F0F3F8;font-family:'Segoe UI',Arial,sans-serif;color:#1A2540}
+  .wrapper{max-width:600px;margin:0 auto;padding:24px 16px}
+  .card{background:#fff;border-radius:16px;overflow:hidden;border:1px solid #E2E8F2}
+  .header{background:#0A3F6B;padding:28px 32px;text-align:center}
+  .header-logo{color:white;font-size:22px;font-weight:700;letter-spacing:-.02em}
+  .header-sub{color:rgba(255,255,255,.65);font-size:13px;margin-top:4px}
+  .body{padding:32px}
+  .greeting{font-size:18px;font-weight:700;margin-bottom:16px}
+  .text{font-size:15px;line-height:1.7;color:#4A5568;margin-bottom:16px}
+  .btn{display:inline-block;background:#0A3F6B;color:white!important;text-decoration:none;padding:14px 32px;border-radius:10px;font-weight:700;font-size:15px;margin:16px 0}
+  .info-box{background:#F4F8FD;border:1px solid #D8E6F5;border-radius:10px;padding:16px 20px;margin:16px 0}
+  .info-row{display:flex;justify-content:space-between;font-size:14px;padding:4px 0}
+  .info-key{color:#6B7A99}
+  .info-val{font-weight:600;color:#1A2540}
+  .info-val.hi{color:#0A3F6B;font-size:16px;font-weight:700}
+  .footer{background:#F4F6F9;padding:20px 32px;text-align:center;font-size:12px;color:#9BA8BC;border-top:1px solid #E2E8F2}
+  .divider{height:1px;background:#E2E8F2;margin:20px 0}
+  .alert-green{background:#EDF9F3;border-left:4px solid #1B7A4E;border-radius:0 8px 8px 0;padding:12px 16px;font-size:14px;color:#1B7A4E;margin:16px 0}
+  .alert-red{background:#FEF0EF;border-left:4px solid #C5372A;border-radius:0 8px 8px 0;padding:12px 16px;font-size:14px;color:#C5372A;margin:16px 0}
+</style>
+</head>
+<body>
+<div class="wrapper">
+<div class="card">
+  <div class="header">
+    <div class="header-logo">🏦 Amen Bank</div>
+    <div class="header-sub">Votre banque, partout avec vous</div>
+  </div>
+  <div class="body" th:fragment="content">PLACEHOLDER</div>
+  <div class="footer">
+    © 2024 Amen Bank. Tous droits réservés.<br/>
+    Cet email a été envoyé automatiquement, ne pas répondre.<br/>
+    <a href="#" style="color:#0A3F6B">Politique de confidentialité</a>
+  </div>
+</div>
+</div>
+</body>
+</html>

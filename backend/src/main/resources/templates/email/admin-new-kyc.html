@@ -1,0 +1,14 @@
+<!DOCTYPE html><html xmlns:th="http://www.thymeleaf.org" lang="fr"><head><meta charset="UTF-8"/><style>body{margin:0;background:#F0F3F8;font-family:'Segoe UI',Arial,sans-serif}.wrapper{max-width:600px;margin:0 auto;padding:24px 16px}.card{background:#fff;border-radius:16px;border:1px solid #E2E8F2}.header{background:#0A3F6B;padding:28px 32px;text-align:center;border-radius:16px 16px 0 0}.logo{color:white;font-size:22px;font-weight:700}.body{padding:32px}.btn{display:inline-block;background:#0A3F6B;color:white!important;text-decoration:none;padding:14px 32px;border-radius:10px;font-weight:700;font-size:15px;margin:20px 0}.footer{padding:20px 32px;text-align:center;font-size:12px;color:#9BA8BC;border-top:1px solid #E2E8F2}</style></head>
+<body><div class="wrapper"><div class="card">
+<div class="header"><div class="logo">🏦 Amen Bank — Administration</div></div>
+<div class="body">
+<p style="font-size:18px;font-weight:700;color:#1A2540">Nouvelle demande KYC</p>
+<p style="font-size:15px;line-height:1.7;color:#4A5568">Un nouvel utilisateur a soumis une demande d'ouverture de compte.</p>
+<div style="background:#F4F8FD;border:1px solid #D8E6F5;border-radius:10px;padding:16px;margin:16px 0">
+<div style="display:flex;justify-content:space-between;font-size:14px;padding:4px 0"><span style="color:#6B7A99">Nom</span><strong th:text="${userName}"></strong></div>
+<div style="display:flex;justify-content:space-between;font-size:14px;padding:4px 0"><span style="color:#6B7A99">Email</span><strong th:text="${userEmail}"></strong></div>
+</div>
+<div style="text-align:center"><a th:href="${adminUrl}" class="btn">Traiter la demande</a></div>
+</div>
+<div class="footer">© 2024 Amen Bank</div>
+</div></div></body></html>

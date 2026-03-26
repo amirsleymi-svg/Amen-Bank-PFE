@@ -1,0 +1,175 @@
+<!-- src/app/features/auth/login/login.component.html -->
+<div class="auth-layout">
+
+  <!-- Left panel — branding -->
+  <div class="auth-brand">
+    <div class="brand-inner">
+      <div class="brand-logo">
+        <svg width="48" height="48" viewBox="0 0 48 48" fill="none">
+          <rect width="48" height="48" rx="12" fill="white" fill-opacity="0.15"/>
+          <path d="M8 36V20L24 10L40 20V36H29V26H19V36H8Z" fill="white"/>
+        </svg>
+        <span class="brand-name">Amen Bank</span>
+      </div>
+      <div class="brand-tagline">
+        <h1>Votre banque,<br>partout avec vous.</h1>
+        <p>Gérez vos comptes, effectuez vos virements et suivez vos finances en toute sécurité.</p>
+      </div>
+      <div class="brand-stats">
+        <div class="stat">
+          <span class="stat-value">256-bit</span>
+          <span class="stat-label">Chiffrement SSL</span>
+        </div>
+        <div class="stat-div"></div>
+        <div class="stat">
+          <span class="stat-value">2FA</span>
+          <span class="stat-label">Double authentification</span>
+        </div>
+        <div class="stat-div"></div>
+        <div class="stat">
+          <span class="stat-value">24/7</span>
+          <span class="stat-label">Surveillance</span>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Right panel — form -->
+  <div class="auth-form-panel">
+    <div class="auth-form-container">
+
+      <!-- Mobile logo -->
+      <div class="mobile-logo">
+        <svg width="36" height="36" viewBox="0 0 48 48" fill="none">
+          <rect width="48" height="48" rx="12" fill="var(--ab-primary)"/>
+          <path d="M8 36V20L24 10L40 20V36H29V26H19V36H8Z" fill="white"/>
+        </svg>
+        <span>Amen Bank</span>
+      </div>
+
+      <div class="form-header">
+        <h2>Connexion</h2>
+        <p>Accédez à votre espace bancaire sécurisé</p>
+      </div>
+
+      <!-- Error alert -->
+      <div class="alert alert-error" *ngIf="errorMessage">
+        <svg width="16" height="16" viewBox="0 0 16 16" fill="none">
+          <circle cx="8" cy="8" r="7" stroke="currentColor" stroke-width="1.5"/>
+          <path d="M8 5v4M8 11v.5" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/>
+        </svg>
+        {{ errorMessage }}
+      </div>
+
+      <!-- Login Form -->
+      <form [formGroup]="loginForm" (ngSubmit)="onSubmit()" class="auth-form" *ngIf="!showTotp">
+
+        <div class="field-group">
+          <label for="identifier">Email ou nom d'utilisateur</label>
+          <div class="input-wrapper" [class.error]="f['identifier'].touched && f['identifier'].invalid">
+            <svg class="input-icon" width="18" height="18" viewBox="0 0 24 24" fill="none">
+              <path d="M20 4H4C2.9 4 2 4.9 2 6v12c0 1.1.9 2 2 2h16c1.1 0 2-.9 2-2V6c0-1.1-.9-2-2-2z" stroke="currentColor" stroke-width="1.5"/>
+              <path d="M22 6l-10 7L2 6" stroke="currentColor" stroke-width="1.5"/>
+            </svg>
+            <input
+              id="identifier"
+              type="text"
+              formControlName="identifier"
+              placeholder="votre@email.com"
+              autocomplete="username"
+              class="form-input"
+            />
+          </div>
+          <span class="field-error" *ngIf="f['identifier'].touched && f['identifier'].errors?.['required']">
+            Ce champ est obligatoire
+          </span>
+        </div>
+
+        <div class="field-group">
+          <div class="label-row">
+            <label for="password">Mot de passe</label>
+            <a routerLink="/auth/forgot-password" class="forgot-link">Mot de passe oublié ?</a>
+          </div>
+          <div class="input-wrapper" [class.error]="f['password'].touched && f['password'].invalid">
+            <svg class="input-icon" width="18" height="18" viewBox="0 0 24 24" fill="none">
+              <rect x="3" y="11" width="18" height="11" rx="2" stroke="currentColor" stroke-width="1.5"/>
+              <path d="M7 11V7a5 5 0 0 1 10 0v4" stroke="currentColor" stroke-width="1.5"/>
+            </svg>
+            <input
+              id="password"
+              [type]="showPassword ? 'text' : 'password'"
+              formControlName="password"
+              placeholder="••••••••"
+              autocomplete="current-password"
+              class="form-input"
+            />
+            <button type="button" class="toggle-password" (click)="showPassword = !showPassword">
+              <svg *ngIf="!showPassword" width="18" height="18" viewBox="0 0 24 24" fill="none">
+                <path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z" stroke="currentColor" stroke-width="1.5"/>
+                <circle cx="12" cy="12" r="3" stroke="currentColor" stroke-width="1.5"/>
+              </svg>
+              <svg *ngIf="showPassword" width="18" height="18" viewBox="0 0 24 24" fill="none">
+                <path d="M17.94 17.94A10.07 10.07 0 0 1 12 20c-7 0-11-8-11-8a18.45 18.45 0 0 1 5.06-5.94M9.9 4.24A9.12 9.12 0 0 1 12 4c7 0 11 8 11 8a18.5 18.5 0 0 1-2.16 3.19m-6.72-1.07a3 3 0 1 1-4.24-4.24" stroke="currentColor" stroke-width="1.5"/>
+                <line x1="1" y1="1" x2="23" y2="23" stroke="currentColor" stroke-width="1.5"/>
+              </svg>
+            </button>
+          </div>
+          <span class="field-error" *ngIf="f['password'].touched && f['password'].errors?.['required']">
+            Ce champ est obligatoire
+          </span>
+        </div>
+
+        <button type="submit" class="btn-primary" [disabled]="isLoading">
+          <span class="btn-spinner" *ngIf="isLoading"></span>
+          <span>{{ isLoading ? 'Connexion en cours...' : 'Se connecter' }}</span>
+          <svg *ngIf="!isLoading" width="18" height="18" viewBox="0 0 24 24" fill="none">
+            <path d="M5 12h14M12 5l7 7-7 7" stroke="currentColor" stroke-width="2" stroke-linecap="round"/>
+          </svg>
+        </button>
+
+      </form>
+
+      <!-- TOTP Step -->
+      <form [formGroup]="totpForm" (ngSubmit)="onTotpSubmit()" class="auth-form totp-form" *ngIf="showTotp">
+        <div class="totp-header">
+          <div class="totp-icon">
+            <svg width="32" height="32" viewBox="0 0 24 24" fill="none">
+              <path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z" stroke="var(--ab-primary)" stroke-width="1.5" stroke-linejoin="round"/>
+              <path d="M9 12l2 2 4-4" stroke="var(--ab-primary)" stroke-width="1.5" stroke-linecap="round"/>
+            </svg>
+          </div>
+          <p>Entrez le code à 6 chiffres généré par votre application <strong>Google Authenticator</strong></p>
+        </div>
+
+        <div class="totp-inputs">
+          <input
+            *ngFor="let i of [0,1,2,3,4,5]; let idx = index"
+            type="text"
+            maxlength="1"
+            inputmode="numeric"
+            pattern="[0-9]"
+            class="totp-digit"
+            [id]="'totp-' + idx"
+            (input)="onTotpDigit($event, idx)"
+            (keydown)="onTotpKeydown($event, idx)"
+            (paste)="onTotpPaste($event)"
+          />
+        </div>
+
+        <button type="submit" class="btn-primary" [disabled]="isLoading || totpCode.length < 6">
+          <span class="btn-spinner" *ngIf="isLoading"></span>
+          <span>{{ isLoading ? 'Vérification...' : 'Vérifier' }}</span>
+        </button>
+
+        <button type="button" class="btn-ghost" (click)="cancelTotp()">
+          ← Retour à la connexion
+        </button>
+      </form>
+
+      <div class="form-footer">
+        <p>Pas encore de compte ? <a routerLink="/auth/register">S'inscrire</a></p>
+      </div>
+
+    </div>
+  </div>
+</div>

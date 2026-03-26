@@ -1,0 +1,19 @@
+<!DOCTYPE html><html xmlns:th="http://www.thymeleaf.org" lang="fr"><head><meta charset="UTF-8"/><style>body{margin:0;background:#F0F3F8;font-family:'Segoe UI',Arial,sans-serif}.wrapper{max-width:600px;margin:0 auto;padding:24px 16px}.card{background:#fff;border-radius:16px;border:1px solid #E2E8F2}.header{background:#0A3F6B;padding:28px 32px;text-align:center;border-radius:16px 16px 0 0}.logo{color:white;font-size:22px;font-weight:700}.body{padding:32px}.btn{display:inline-block;background:#0A3F6B;color:white!important;text-decoration:none;padding:14px 32px;border-radius:10px;font-weight:700;font-size:15px;margin:20px 0}.footer{padding:20px 32px;text-align:center;font-size:12px;color:#9BA8BC;border-top:1px solid #E2E8F2}</style></head>
+<body><div class="wrapper"><div class="card">
+<div class="header"><div class="logo">🏦 Amen Bank</div></div>
+<div class="body">
+<p style="font-size:18px;font-weight:700;color:#1A2540;margin-bottom:16px">Bonjour <span th:text="${name}"></span>,</p>
+<div th:if="${status == 'APPROVED'}" style="background:#EDF9F3;border-radius:12px;padding:20px;text-align:center;margin-bottom:20px">
+<div style="font-size:28px;font-weight:700;color:#1B7A4E">🎉 Bienvenue chez Amen Bank !</div>
+<div style="font-size:14px;color:#1B7A4E;margin-top:8px">Votre compte a été approuvé et est maintenant actif</div>
+</div>
+<div th:if="${status == 'REJECTED'}" style="background:#FEF0EF;border-radius:12px;padding:20px;margin-bottom:20px">
+<div style="font-size:16px;font-weight:700;color:#C5372A">Demande non approuvée</div>
+<div th:if="${reason}" style="font-size:14px;color:#C5372A;margin-top:8px">Motif : <span th:text="${reason}"></span></div>
+</div>
+<p style="font-size:15px;line-height:1.7;color:#4A5568" th:if="${status == 'APPROVED'}">Votre compte courant a été créé. Vous pouvez maintenant vous connecter et accéder à tous nos services.</p>
+<p style="font-size:15px;line-height:1.7;color:#4A5568" th:if="${status == 'REJECTED'}">Nous vous invitons à nous contacter pour plus d'informations ou à soumettre une nouvelle demande avec des documents complets.</p>
+<div th:if="${status == 'APPROVED'}" style="text-align:center"><a th:href="${loginUrl}" class="btn">Accéder à mon espace</a></div>
+</div>
+<div class="footer">© 2024 Amen Bank</div>
+</div></div></body></html>

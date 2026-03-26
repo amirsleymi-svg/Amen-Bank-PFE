@@ -1,0 +1,8 @@
+#!/bin/sh
+# Maven Wrapper Script
+MAVEN_WRAPPER_JAR=".mvn/wrapper/maven-wrapper.jar"
+if [ -r "$MAVEN_WRAPPER_JAR" ]; then
+  exec "$JAVA_HOME/bin/java" -jar "$MAVEN_WRAPPER_JAR" "$@"
+else
+  exec mvn "$@"
+fi

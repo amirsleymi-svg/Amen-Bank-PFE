@@ -1,0 +1,45 @@
+spring:
+  datasource:
+    url: jdbc:h2:mem:testdb;DB_CLOSE_DELAY=-1;MODE=MySQL
+    driver-class-name: org.h2.Driver
+    username: sa
+    password:
+  jpa:
+    hibernate:
+      ddl-auto: create-drop
+    properties:
+      hibernate:
+        dialect: org.hibernate.dialect.H2Dialect
+  flyway:
+    enabled: false
+  data:
+    redis:
+      host: localhost
+      port: 6379
+  mail:
+    host: localhost
+    port: 1025
+    username: test
+    password: test
+
+jwt:
+  secret: dGVzdFNlY3JldEtleUZvclRlc3RpbmdPbmx5TXVzdEJlQXRMZWFzdDI1NkJpdHM=
+  access-expiration-ms: 900000
+  refresh-expiration-ms: 604800000
+
+app:
+  bcrypt-strength: 4
+  admin-secret-key-hash: $2a$04$test
+  frontend-url: http://localhost:4200
+  mail-from: test@amenbank.com
+  max-login-attempts: 5
+  lockout-duration-minutes: 15
+  upload-path: /tmp/test-uploads
+
+totp:
+  issuer: AmenBankTest
+
+logging:
+  level:
+    root: WARN
+    com.amenbank: DEBUG

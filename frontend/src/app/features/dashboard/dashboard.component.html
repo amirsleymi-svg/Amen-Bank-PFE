@@ -1,0 +1,243 @@
+<!-- src/app/features/dashboard/dashboard.component.html -->
+<div class="dashboard-layout">
+
+  <!-- ── Sidebar ──────────────────────────────────────────────────── -->
+  <aside class="sidebar" [class.collapsed]="sidebarCollapsed">
+    <div class="sidebar-header">
+      <div class="sidebar-logo">
+        <svg width="36" height="36" viewBox="0 0 48 48" fill="none">
+          <rect width="48" height="48" rx="10" fill="var(--ab-primary)"/>
+          <path d="M8 36V20L24 10L40 20V36H29V26H19V36H8Z" fill="white"/>
+        </svg>
+        <span class="sidebar-brand" *ngIf="!sidebarCollapsed">Amen Bank</span>
+      </div>
+      <button class="sidebar-toggle" (click)="sidebarCollapsed = !sidebarCollapsed">
+        <svg width="18" height="18" viewBox="0 0 24 24" fill="none">
+          <path d="M4 6h16M4 12h16M4 18h16" stroke="currentColor" stroke-width="2" stroke-linecap="round"/>
+        </svg>
+      </button>
+    </div>
+
+    <nav class="sidebar-nav">
+      <a routerLink="/dashboard" routerLinkActive="active" class="nav-item">
+        <svg width="20" height="20" viewBox="0 0 24 24" fill="none">
+          <rect x="3" y="3" width="7" height="7" rx="1" stroke="currentColor" stroke-width="1.75"/>
+          <rect x="14" y="3" width="7" height="7" rx="1" stroke="currentColor" stroke-width="1.75"/>
+          <rect x="3" y="14" width="7" height="7" rx="1" stroke="currentColor" stroke-width="1.75"/>
+          <rect x="14" y="14" width="7" height="7" rx="1" stroke="currentColor" stroke-width="1.75"/>
+        </svg>
+        <span *ngIf="!sidebarCollapsed">Tableau de bord</span>
+      </a>
+
+      <a routerLink="/dashboard/transfers" routerLinkActive="active" class="nav-item">
+        <svg width="20" height="20" viewBox="0 0 24 24" fill="none">
+          <path d="M17 3l4 4-4 4M3 7h18M7 21l-4-4 4-4M21 17H3" stroke="currentColor" stroke-width="1.75" stroke-linecap="round"/>
+        </svg>
+        <span *ngIf="!sidebarCollapsed">Virements</span>
+      </a>
+
+      <a routerLink="/dashboard/credits" routerLinkActive="active" class="nav-item">
+        <svg width="20" height="20" viewBox="0 0 24 24" fill="none">
+          <rect x="2" y="5" width="20" height="14" rx="2" stroke="currentColor" stroke-width="1.75"/>
+          <path d="M2 10h20" stroke="currentColor" stroke-width="1.75"/>
+        </svg>
+        <span *ngIf="!sidebarCollapsed">Crédits</span>
+      </a>
+
+      <a routerLink="/dashboard/beneficiaries" routerLinkActive="active" class="nav-item">
+        <svg width="20" height="20" viewBox="0 0 24 24" fill="none">
+          <path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2" stroke="currentColor" stroke-width="1.75"/>
+          <circle cx="9" cy="7" r="4" stroke="currentColor" stroke-width="1.75"/>
+          <path d="M23 21v-2a4 4 0 0 0-3-3.87M16 3.13a4 4 0 0 1 0 7.75" stroke="currentColor" stroke-width="1.75" stroke-linecap="round"/>
+        </svg>
+        <span *ngIf="!sidebarCollapsed">Bénéficiaires</span>
+      </a>
+
+      <a routerLink="/dashboard/profile" routerLinkActive="active" class="nav-item">
+        <svg width="20" height="20" viewBox="0 0 24 24" fill="none">
+          <path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2" stroke="currentColor" stroke-width="1.75"/>
+          <circle cx="12" cy="7" r="4" stroke="currentColor" stroke-width="1.75"/>
+        </svg>
+        <span *ngIf="!sidebarCollapsed">Profil</span>
+      </a>
+    </nav>
+
+    <div class="sidebar-footer">
+      <button class="nav-item logout-btn" (click)="logout()">
+        <svg width="20" height="20" viewBox="0 0 24 24" fill="none">
+          <path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4M16 17l5-5-5-5M21 12H9" stroke="currentColor" stroke-width="1.75" stroke-linecap="round"/>
+        </svg>
+        <span *ngIf="!sidebarCollapsed">Déconnexion</span>
+      </button>
+    </div>
+  </aside>
+
+  <!-- ── Main content ──────────────────────────────────────────────── -->
+  <main class="main-content">
+
+    <!-- Top bar -->
+    <header class="topbar">
+      <div class="topbar-left">
+        <h1 class="page-title">Tableau de bord</h1>
+        <span class="page-date">{{ today | date:'EEEE d MMMM yyyy' : '' : 'fr-FR' }}</span>
+      </div>
+      <div class="topbar-right">
+        <button class="icon-btn" title="Notifications">
+          <svg width="20" height="20" viewBox="0 0 24 24" fill="none">
+            <path d="M18 8A6 6 0 0 0 6 8c0 7-3 9-3 9h18s-3-2-3-9" stroke="currentColor" stroke-width="1.75"/>
+            <path d="M13.73 21a2 2 0 0 1-3.46 0" stroke="currentColor" stroke-width="1.75"/>
+          </svg>
+          <span class="badge" *ngIf="unreadCount > 0">{{ unreadCount }}</span>
+        </button>
+
+        <div class="user-avatar" [title]="user?.firstName + ' ' + user?.lastName">
+          {{ user?.firstName?.charAt(0) }}{{ user?.lastName?.charAt(0) }}
+        </div>
+      </div>
+    </header>
+
+    <!-- Welcome banner -->
+    <div class="welcome-banner">
+      <div class="welcome-text">
+        <h2>Bonjour, {{ user?.firstName }} 👋</h2>
+        <p>Voici un aperçu de vos finances</p>
+      </div>
+      <div class="welcome-actions">
+        <button class="btn-primary-sm" routerLink="/dashboard/transfers">
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="none">
+            <path d="M17 3l4 4-4 4M3 7h18M7 21l-4-4 4-4M21 17H3" stroke="white" stroke-width="2" stroke-linecap="round"/>
+          </svg>
+          Virement
+        </button>
+        <button class="btn-outline-sm" routerLink="/dashboard/credits">
+          Simuler un crédit
+        </button>
+      </div>
+    </div>
+
+    <!-- Account cards -->
+    <section class="section">
+      <div class="section-header">
+        <h3>Mes comptes</h3>
+        <span class="total-balance">Total : <strong>{{ totalBalance | number:'1.3-3' }} TND</strong></span>
+      </div>
+      <div class="account-cards">
+        <div
+          *ngFor="let account of accounts"
+          class="account-card"
+          [class.active]="selectedAccount?.id === account.id"
+          (click)="selectAccount(account)"
+        >
+          <div class="account-card-header">
+            <div class="account-type-badge" [class]="'type-' + account.accountType.toLowerCase()">
+              {{ accountTypeLabel(account.accountType) }}
+            </div>
+            <div class="account-status" [class]="'status-' + account.status.toLowerCase()">
+              <span class="status-dot"></span>
+              {{ account.status === 'ACTIVE' ? 'Actif' : account.status }}
+            </div>
+          </div>
+          <div class="account-balance">
+            <span class="balance-label">Solde disponible</span>
+            <span class="balance-amount">{{ account.availableBalance | number:'1.3-3' }}</span>
+            <span class="balance-currency">TND</span>
+          </div>
+          <div class="account-number">
+            {{ formatIban(account.iban) }}
+          </div>
+        </div>
+
+        <!-- Loading skeleton -->
+        <div class="account-card skeleton" *ngIf="isLoading">
+          <div class="sk-line w-40"></div>
+          <div class="sk-line w-80 mt-2 tall"></div>
+          <div class="sk-line w-60 mt-1"></div>
+        </div>
+      </div>
+    </section>
+
+    <!-- Transactions & chart -->
+    <div class="dashboard-grid">
+
+      <!-- Chart -->
+      <section class="section chart-section">
+        <div class="section-header">
+          <h3>Activité financière</h3>
+          <div class="period-tabs">
+            <button
+              *ngFor="let p of periods"
+              class="period-tab"
+              [class.active]="activePeriod === p.value"
+              (click)="activePeriod = p.value"
+            >{{ p.label }}</button>
+          </div>
+        </div>
+        <div class="chart-container">
+          <canvas id="activityChart"></canvas>
+        </div>
+      </section>
+
+      <!-- Recent transactions -->
+      <section class="section transactions-section">
+        <div class="section-header">
+          <h3>Transactions récentes</h3>
+          <a routerLink="/dashboard/transactions" class="view-all">Voir tout →</a>
+        </div>
+
+        <div class="tx-list" *ngIf="!isLoadingTx">
+          <div class="tx-item" *ngFor="let tx of recentTransactions">
+            <div class="tx-icon" [class]="'cat-' + tx.category.toLowerCase()">
+              <svg width="16" height="16" viewBox="0 0 24 24" fill="none">
+                <path *ngIf="tx.type === 'DEBIT'" d="M5 12h14M12 5l7 7-7 7" stroke="currentColor" stroke-width="2" stroke-linecap="round"/>
+                <path *ngIf="tx.type === 'CREDIT'" d="M19 12H5M12 19l-7-7 7-7" stroke="currentColor" stroke-width="2" stroke-linecap="round"/>
+              </svg>
+            </div>
+            <div class="tx-info">
+              <span class="tx-label">{{ tx.label || tx.category }}</span>
+              <span class="tx-meta">{{ tx.counterpartName || '' }} · {{ tx.valueDate | date:'dd/MM' }}</span>
+            </div>
+            <div class="tx-amount" [class.debit]="tx.type === 'DEBIT'" [class.credit]="tx.type === 'CREDIT'">
+              {{ tx.type === 'DEBIT' ? '-' : '+' }}{{ tx.amount | number:'1.3-3' }} TND
+            </div>
+          </div>
+
+          <div class="tx-empty" *ngIf="recentTransactions.length === 0">
+            <svg width="40" height="40" viewBox="0 0 24 24" fill="none">
+              <circle cx="12" cy="12" r="10" stroke="currentColor" stroke-width="1.2"/>
+              <path d="M12 8v4M12 16h.01" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/>
+            </svg>
+            <p>Aucune transaction récente</p>
+          </div>
+        </div>
+
+        <!-- Tx skeleton -->
+        <div class="tx-skeleton" *ngIf="isLoadingTx">
+          <div class="sk-tx-row" *ngFor="let _ of [1,2,3,4,5]">
+            <div class="sk-circle"></div>
+            <div class="sk-lines">
+              <div class="sk-line w-60"></div>
+              <div class="sk-line w-40 mt-1 thin"></div>
+            </div>
+            <div class="sk-line w-30 right"></div>
+          </div>
+        </div>
+      </section>
+    </div>
+
+  </main>
+
+  <!-- ── Chatbot widget ─────────────────────────────────────────────── -->
+  <div class="chatbot-widget" [class.open]="chatOpen">
+    <button class="chatbot-toggle" (click)="chatOpen = !chatOpen">
+      <svg *ngIf="!chatOpen" width="24" height="24" viewBox="0 0 24 24" fill="none">
+        <path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z" stroke="white" stroke-width="2" stroke-linejoin="round"/>
+      </svg>
+      <svg *ngIf="chatOpen" width="24" height="24" viewBox="0 0 24 24" fill="none">
+        <line x1="18" y1="6" x2="6" y2="18" stroke="white" stroke-width="2" stroke-linecap="round"/>
+        <line x1="6" y1="6" x2="18" y2="18" stroke="white" stroke-width="2" stroke-linecap="round"/>
+      </svg>
+    </button>
+    <app-chatbot-widget *ngIf="chatOpen"></app-chatbot-widget>
+  </div>
+
+</div>

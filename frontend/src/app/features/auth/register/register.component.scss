@@ -1,0 +1,9 @@
+@use '../auth.styles.scss';
+.field-row { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; @media (max-width: 480px) { grid-template-columns: 1fr; } }
+.btn-group { display: flex; gap: 10px; }
+.btn-outline { height: 50px; flex: 1; background: transparent; border: 1.5px solid var(--ab-border); border-radius: 8px; font-size: 0.95rem; font-weight: 600; cursor: pointer; color: var(--ab-muted); &:hover { background: var(--ab-bg); } }
+.brand-features { margin-top: 2rem; display: flex; flex-direction: column; gap: 12px; }
+.feature-item { display: flex; align-items: center; gap: 10px; font-size: 0.9rem; color: rgba(255,255,255,0.8); }
+.feature-icon { width: 28px; height: 28px; background: rgba(255,255,255,0.12); border-radius: 50%; display: flex; align-items: center; justify-content: center; flex-shrink: 0; }
+.success-icon { display: flex; justify-content: center; margin-bottom: 1rem; }
+.info-card { background: rgba(10,63,107,0.06); border: 1px solid rgba(10,63,107,0.15); border-radius: 10px; padding: 1rem; display: flex; align-items: flex-start; gap: 10px; margin-top: 1rem; svg { flex-shrink: 0; margin-top: 2px; } p { font-size: 0.85rem; color: var(--ab-muted); margin: 0; line-height: 1.5; } }

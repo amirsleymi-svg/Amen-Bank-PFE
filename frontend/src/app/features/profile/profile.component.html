@@ -1,0 +1,483 @@
+<!-- profile.component.html -->
+<div class="page-container">
+
+  <!-- Header -->
+  <div class="page-header">
+    <div>
+      <h2>Mon profil</h2>
+      <p>Gérez vos informations personnelles et la sécurité de votre compte</p>
+    </div>
+  </div>
+
+  <!-- Alert -->
+  <div class="alert-success" *ngIf="globalSuccess">
+    <svg width="16" height="16" viewBox="0 0 16 16" fill="none">
+      <circle cx="8" cy="8" r="7" stroke="currentColor" stroke-width="1.5"/>
+      <path d="M5 8l2.5 2.5L11 5" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/>
+    </svg>
+    {{ globalSuccess }}
+  </div>
+
+  <div class="profile-grid">
+
+    <!-- ── LEFT: User info card ────────────────────────────────────── -->
+    <div class="profile-left">
+
+      <!-- Avatar + identity -->
+      <div class="card identity-card">
+        <div class="avatar-block">
+          <div class="avatar-circle">
+            {{ user?.firstName?.charAt(0) }}{{ user?.lastName?.charAt(0) }}
+          </div>
+          <div class="avatar-info">
+            <h3>{{ user?.firstName }} {{ user?.lastName }}</h3>
+            <span class="user-email">{{ user?.email }}</span>
+            <span class="user-status active" *ngIf="user?.status === 'ACTIVE'">
+              <span class="dot"></span>Compte actif
+            </span>
+          </div>
+        </div>
+
+        <div class="divider"></div>
+
+        <div class="info-list">
+          <div class="info-item">
+            <span class="info-label">Nom d'utilisateur</span>
+            <span class="info-value">{{ user?.username }}</span>
+          </div>
+          <div class="info-item">
+            <span class="info-label">Numéro CIN</span>
+            <span class="info-value mono">{{ user?.idCardNumber }}</span>
+          </div>
+          <div class="info-item">
+            <span class="info-label">Téléphone</span>
+            <span class="info-value">{{ user?.phoneNumber || '—' }}</span>
+          </div>
+          <div class="info-item">
+            <span class="info-label">Membre depuis</span>
+            <span class="info-value">{{ user?.createdAt | date:'MMMM yyyy':'':'fr-FR' }}</span>
+          </div>
+          <div class="info-item">
+            <span class="info-label">Dernière connexion</span>
+            <span class="info-value">{{ user?.lastLoginAt | date:'dd/MM/yyyy HH:mm' }}</span>
+          </div>
+        </div>
+
+        <!-- Roles badges -->
+        <div class="divider"></div>
+        <div class="roles-row">
+          <span class="role-badge" *ngFor="let role of user?.roles">
+            {{ roleLabel(role) }}
+          </span>
+        </div>
+      </div>
+
+      <!-- Email verification status -->
+      <div class="card status-card">
+        <div class="status-row">
+          <div class="status-icon" [class.ok]="user?.emailVerified" [class.warn]="!user?.emailVerified">
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none">
+              <path d="M20 4H4C2.9 4 2 4.9 2 6v12c0 1.1.9 2 2 2h16c1.1 0 2-.9 2-2V6c0-1.1-.9-2-2-2z" stroke="currentColor" stroke-width="1.75"/>
+              <path d="M22 6l-10 7L2 6" stroke="currentColor" stroke-width="1.75"/>
+            </svg>
+          </div>
+          <div>
+            <strong>Email</strong>
+            <span [class.verified]="user?.emailVerified" [class.unverified]="!user?.emailVerified">
+              {{ user?.emailVerified ? 'Vérifié ✓' : 'Non vérifié' }}
+            </span>
+          </div>
+        </div>
+        <div class="status-row">
+          <div class="status-icon" [class.ok]="user?.totpEnabled" [class.warn]="!user?.totpEnabled">
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none">
+              <path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z" stroke="currentColor" stroke-width="1.75" stroke-linejoin="round"/>
+            </svg>
+          </div>
+          <div>
+            <strong>Double authentification</strong>
+            <span [class.verified]="user?.totpEnabled" [class.unverified]="!user?.totpEnabled">
+              {{ user?.totpEnabled ? 'Activée ✓' : 'Désactivée ⚠️' }}
+            </span>
+          </div>
+        </div>
+      </div>
+
+    </div>
+
+    <!-- ── RIGHT: Tabs for actions ────────────────────────────────── -->
+    <div class="profile-right">
+
+      <!-- Tab navigation -->
+      <div class="section-tabs">
+        <button class="stab" [class.active]="activeSection==='2fa'" (click)="activeSection='2fa'">
+          <svg width="15" height="15" viewBox="0 0 24 24" fill="none">
+            <path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z" stroke="currentColor" stroke-width="1.75" stroke-linejoin="round"/>
+          </svg>
+          Double authentification
+        </button>
+        <button class="stab" [class.active]="activeSection==='password'" (click)="activeSection='password'">
+          <svg width="15" height="15" viewBox="0 0 24 24" fill="none">
+            <rect x="3" y="11" width="18" height="11" rx="2" stroke="currentColor" stroke-width="1.75"/>
+            <path d="M7 11V7a5 5 0 0 1 10 0v4" stroke="currentColor" stroke-width="1.75"/>
+          </svg>
+          Mot de passe
+        </button>
+        <button class="stab" [class.active]="activeSection==='sessions'" (click)="activeSection='sessions'">
+          <svg width="15" height="15" viewBox="0 0 24 24" fill="none">
+            <rect x="2" y="3" width="20" height="14" rx="2" stroke="currentColor" stroke-width="1.75"/>
+            <path d="M8 21h8M12 17v4" stroke="currentColor" stroke-width="1.75" stroke-linecap="round"/>
+          </svg>
+          Sessions
+        </button>
+      </div>
+
+      <!-- ══ SECTION: 2FA / Google Authenticator ══ -->
+      <div class="card section-card" *ngIf="activeSection==='2fa'">
+
+        <!-- Already enabled state -->
+        <ng-container *ngIf="user?.totpEnabled && !disabling2fa">
+          <div class="section-header-row">
+            <div class="section-icon enabled-icon">
+              <svg width="22" height="22" viewBox="0 0 24 24" fill="none">
+                <path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z" fill="rgba(27,122,78,.12)" stroke="#1B7A4E" stroke-width="1.75" stroke-linejoin="round"/>
+                <path d="M9 12l2 2 4-4" stroke="#1B7A4E" stroke-width="1.75" stroke-linecap="round"/>
+              </svg>
+            </div>
+            <div>
+              <h3>Double authentification activée</h3>
+              <p>Votre compte est protégé par Google Authenticator</p>
+            </div>
+          </div>
+
+          <div class="enabled-features">
+            <div class="ef-item">
+              <svg width="16" height="16" viewBox="0 0 24 24" fill="none">
+                <path d="M9 12l2 2 4-4" stroke="#1B7A4E" stroke-width="2" stroke-linecap="round"/>
+                <circle cx="12" cy="12" r="10" stroke="#1B7A4E" stroke-width="1.5"/>
+              </svg>
+              Connexion sécurisée par code tournant
+            </div>
+            <div class="ef-item">
+              <svg width="16" height="16" viewBox="0 0 24 24" fill="none">
+                <path d="M9 12l2 2 4-4" stroke="#1B7A4E" stroke-width="2" stroke-linecap="round"/>
+                <circle cx="12" cy="12" r="10" stroke="#1B7A4E" stroke-width="1.5"/>
+              </svg>
+              Virements confirmés par Google Authenticator
+            </div>
+            <div class="ef-item">
+              <svg width="16" height="16" viewBox="0 0 24 24" fill="none">
+                <path d="M9 12l2 2 4-4" stroke="#1B7A4E" stroke-width="2" stroke-linecap="round"/>
+                <circle cx="12" cy="12" r="10" stroke="#1B7A4E" stroke-width="1.5"/>
+              </svg>
+              8 codes de secours à usage unique
+            </div>
+          </div>
+
+          <div class="danger-zone">
+            <h4>Zone dangereuse</h4>
+            <p>Désactiver la 2FA réduit la sécurité de votre compte.</p>
+            <button class="btn-danger-outline" (click)="disabling2fa=true">Désactiver la 2FA</button>
+          </div>
+        </ng-container>
+
+        <!-- Setup flow (not enabled or enabling) -->
+        <ng-container *ngIf="!user?.totpEnabled || setupMode">
+
+          <!-- Step 1: intro -->
+          <div *ngIf="totpStep===0">
+            <div class="section-header-row">
+              <div class="section-icon warn-icon">
+                <svg width="22" height="22" viewBox="0 0 24 24" fill="none">
+                  <path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z" fill="rgba(200,168,75,.12)" stroke="#C8A84B" stroke-width="1.75" stroke-linejoin="round"/>
+                  <path d="M12 8v4M12 16h.01" stroke="#C8A84B" stroke-width="1.75" stroke-linecap="round"/>
+                </svg>
+              </div>
+              <div>
+                <h3>Activer Google Authenticator</h3>
+                <p>Sécurisez votre compte avec une double authentification</p>
+              </div>
+            </div>
+
+            <div class="setup-steps-preview">
+              <div class="ssp-item">
+                <span class="ssp-num">1</span>
+                <p>Installez <strong>Google Authenticator</strong> sur votre mobile (App Store / Google Play)</p>
+              </div>
+              <div class="ssp-item">
+                <span class="ssp-num">2</span>
+                <p>Scannez le QR code qui apparaîtra</p>
+              </div>
+              <div class="ssp-item">
+                <span class="ssp-num">3</span>
+                <p>Entrez le code à 6 chiffres pour confirmer</p>
+              </div>
+            </div>
+
+            <button class="btn-primary" (click)="startSetup()" [disabled]="setupLoading">
+              <span class="spin-sm" *ngIf="setupLoading"></span>
+              Commencer la configuration
+              <svg *ngIf="!setupLoading" width="16" height="16" viewBox="0 0 24 24" fill="none">
+                <path d="M5 12h14M12 5l7 7-7 7" stroke="white" stroke-width="2" stroke-linecap="round"/>
+              </svg>
+            </button>
+          </div>
+
+          <!-- Step 2: QR Code scan -->
+          <div *ngIf="totpStep===1 && totpSetupData">
+            <h3 class="step-title">
+              <span class="step-badge">Étape 1</span>
+              Scannez ce QR code
+            </h3>
+            <p class="step-desc">Ouvrez Google Authenticator → Ajouter un compte → Scanner un code QR</p>
+
+            <div class="qr-container">
+              <img [src]="totpSetupData.qrCodeDataUri" alt="QR Code Google Authenticator"
+                   class="qr-image"/>
+              <div class="qr-label">Amen Bank — {{ user?.email }}</div>
+            </div>
+
+            <div class="manual-entry">
+              <p>Impossible de scanner ? Entrez ce code manuellement :</p>
+              <div class="secret-box">
+                <code class="secret-code">{{ formatSecret(totpSetupData.secret) }}</code>
+                <button class="btn-copy" (click)="copySecret()">
+                  <svg width="14" height="14" viewBox="0 0 24 24" fill="none">
+                    <rect x="9" y="9" width="13" height="13" rx="2" stroke="currentColor" stroke-width="1.75"/>
+                    <path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1" stroke="currentColor" stroke-width="1.75"/>
+                  </svg>
+                  {{ copied ? 'Copié !' : 'Copier' }}
+                </button>
+              </div>
+            </div>
+
+            <div class="totp-meta">
+              <span>Émetteur : <strong>{{ totpSetupData.issuer }}</strong></span>
+              <span>Durée : <strong>{{ totpSetupData.period }}s</strong></span>
+              <span>Chiffres : <strong>{{ totpSetupData.digits }}</strong></span>
+            </div>
+
+            <button class="btn-primary" (click)="totpStep=2">
+              J'ai scanné le code
+              <svg width="16" height="16" viewBox="0 0 24 24" fill="none">
+                <path d="M5 12h14M12 5l7 7-7 7" stroke="white" stroke-width="2" stroke-linecap="round"/>
+              </svg>
+            </button>
+          </div>
+
+          <!-- Step 3: verify code -->
+          <div *ngIf="totpStep===2">
+            <h3 class="step-title">
+              <span class="step-badge">Étape 2</span>
+              Vérifiez la configuration
+            </h3>
+            <p class="step-desc">Entrez le code à 6 chiffres affiché dans Google Authenticator pour Amen Bank</p>
+
+            <div class="alert-error" *ngIf="totpError">{{ totpError }}</div>
+
+            <div class="digit-row-lg" [class.shake]="shaking">
+              <input *ngFor="let _ of [0,1,2,3,4,5]; let i = index"
+                     #verifyDigit
+                     type="text" inputmode="numeric" maxlength="1"
+                     class="digit-lg"
+                     [class.filled]="verifyDigits[i]"
+                     [class.errored]="totpError"
+                     [value]="verifyDigits[i]"
+                     (input)="onVerifyInput($event, i)"
+                     (keydown)="onVerifyKeydown($event, i)"
+                     (paste)="onVerifyPaste($event)"/>
+            </div>
+
+            <div class="timer-hint">
+              <svg width="14" height="14" viewBox="0 0 24 24" fill="none">
+                <circle cx="12" cy="12" r="10" stroke="currentColor" stroke-width="1.5"/>
+                <polyline points="12 6 12 12 16 14" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/>
+              </svg>
+              Le code se renouvelle toutes les 30 secondes
+            </div>
+
+            <div class="action-row">
+              <button class="btn-outline" (click)="totpStep=1">← Retour</button>
+              <button class="btn-primary" (click)="confirmEnable()"
+                      [disabled]="verifyCode.length < 6 || totpEnableLoading">
+                <span class="spin-sm" *ngIf="totpEnableLoading"></span>
+                {{ totpEnableLoading ? 'Activation…' : 'Activer la 2FA' }}
+              </button>
+            </div>
+          </div>
+
+          <!-- Step 4: backup codes -->
+          <div *ngIf="totpStep===3" class="backup-codes-panel">
+            <div class="success-ring-sm">
+              <svg width="28" height="28" viewBox="0 0 24 24" fill="none">
+                <path d="M20 6L9 17l-5-5" stroke="white" stroke-width="2.5" stroke-linecap="round"/>
+              </svg>
+            </div>
+            <h3>2FA activée avec succès !</h3>
+            <p>Conservez ces codes de secours dans un endroit sûr. Chaque code ne peut être utilisé qu'une seule fois si vous perdez accès à votre téléphone.</p>
+            <div class="backup-grid">
+              <code *ngFor="let code of backupCodes" class="backup-code">{{ code }}</code>
+            </div>
+            <div class="backup-warning">
+              ⚠️ Ces codes ne seront plus affichés. Notez-les maintenant.
+            </div>
+            <div class="action-row">
+              <button class="btn-outline" (click)="downloadBackupCodes()">Télécharger (.txt)</button>
+              <button class="btn-primary" (click)="totpStep=0; setupMode=false; reloadUser()">Terminer</button>
+            </div>
+          </div>
+
+        </ng-container>
+
+        <!-- Disable 2FA confirmation -->
+        <ng-container *ngIf="disabling2fa">
+          <div class="disable-confirm">
+            <div class="section-icon warn-icon" style="margin-bottom:1rem">
+              <svg width="22" height="22" viewBox="0 0 24 24" fill="none">
+                <path d="M10.29 3.86L1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z" stroke="#C8A84B" stroke-width="1.75"/>
+                <line x1="12" y1="9" x2="12" y2="13" stroke="#C8A84B" stroke-width="1.75" stroke-linecap="round"/>
+                <line x1="12" y1="17" x2="12.01" y2="17" stroke="#C8A84B" stroke-width="1.75" stroke-linecap="round"/>
+              </svg>
+            </div>
+            <h3>Désactiver la double authentification ?</h3>
+            <p>Cette action réduira significativement la sécurité de votre compte. Tous les virements et opérations sensibles ne seront plus protégés.</p>
+            <div class="action-row" style="margin-top:1.5rem">
+              <button class="btn-outline" (click)="disabling2fa=false">Annuler</button>
+              <button class="btn-danger" (click)="disable2FA()">Désactiver quand même</button>
+            </div>
+          </div>
+        </ng-container>
+      </div>
+
+      <!-- ══ SECTION: Password Change ══ -->
+      <div class="card section-card" *ngIf="activeSection==='password'">
+        <div class="section-header-row">
+          <div class="section-icon">
+            <svg width="22" height="22" viewBox="0 0 24 24" fill="none">
+              <rect x="3" y="11" width="18" height="11" rx="2" stroke="var(--ab-primary)" stroke-width="1.75"/>
+              <path d="M7 11V7a5 5 0 0 1 10 0v4" stroke="var(--ab-primary)" stroke-width="1.75"/>
+            </svg>
+          </div>
+          <div>
+            <h3>Changer le mot de passe</h3>
+            <p>Utilisez un mot de passe fort d'au moins 8 caractères</p>
+          </div>
+        </div>
+
+        <div class="alert-error" *ngIf="pwError">{{ pwError }}</div>
+        <div class="alert-success" *ngIf="pwSuccess">{{ pwSuccess }}</div>
+
+        <form [formGroup]="pwForm" (ngSubmit)="changePassword()" class="pw-form">
+
+          <div class="field-group">
+            <label>Mot de passe actuel *</label>
+            <div class="inp-wrap">
+              <svg class="inp-icon" width="17" height="17" viewBox="0 0 24 24" fill="none">
+                <rect x="3" y="11" width="18" height="11" rx="2" stroke="currentColor" stroke-width="1.5"/>
+                <path d="M7 11V7a5 5 0 0 1 10 0v4" stroke="currentColor" stroke-width="1.5"/>
+              </svg>
+              <input formControlName="currentPassword" [type]="showCurrent?'text':'password'"
+                     placeholder="••••••••" class="form-inp"/>
+              <button type="button" class="toggle-vis" (click)="showCurrent=!showCurrent">
+                <svg width="16" height="16" viewBox="0 0 24 24" fill="none">
+                  <path *ngIf="!showCurrent" d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z" stroke="currentColor" stroke-width="1.5"/>
+                  <circle *ngIf="!showCurrent" cx="12" cy="12" r="3" stroke="currentColor" stroke-width="1.5"/>
+                  <path *ngIf="showCurrent" d="M17.94 17.94A10.07 10.07 0 0 1 12 20c-7 0-11-8-11-8a18.45 18.45 0 0 1 5.06-5.94M9.9 4.24A9.12 9.12 0 0 1 12 4c7 0 11 8 11 8a18.5 18.5 0 0 1-2.16 3.19m-6.72-1.07a3 3 0 1 1-4.24-4.24M1 1l22 22" stroke="currentColor" stroke-width="1.5"/>
+                </svg>
+              </button>
+            </div>
+          </div>
+
+          <div class="field-group">
+            <label>Nouveau mot de passe *</label>
+            <div class="inp-wrap">
+              <svg class="inp-icon" width="17" height="17" viewBox="0 0 24 24" fill="none">
+                <rect x="3" y="11" width="18" height="11" rx="2" stroke="currentColor" stroke-width="1.5"/>
+                <path d="M7 11V7a5 5 0 0 1 10 0v4" stroke="currentColor" stroke-width="1.5"/>
+              </svg>
+              <input formControlName="newPassword" [type]="showNew?'text':'password'"
+                     placeholder="••••••••" class="form-inp"/>
+              <button type="button" class="toggle-vis" (click)="showNew=!showNew">
+                <svg width="16" height="16" viewBox="0 0 24 24" fill="none">
+                  <path *ngIf="!showNew" d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z" stroke="currentColor" stroke-width="1.5"/>
+                  <circle *ngIf="!showNew" cx="12" cy="12" r="3" stroke="currentColor" stroke-width="1.5"/>
+                  <path *ngIf="showNew" d="M17.94 17.94A10.07 10.07 0 0 1 12 20c-7 0-11-8-11-8a18.45 18.45 0 0 1 5.06-5.94M9.9 4.24A9.12 9.12 0 0 1 12 4c7 0 11 8 11 8a18.5 18.5 0 0 1-2.16 3.19m-6.72-1.07a3 3 0 1 1-4.24-4.24M1 1l22 22" stroke="currentColor" stroke-width="1.5"/>
+                </svg>
+              </button>
+            </div>
+            <!-- strength bar -->
+            <div class="strength-bar" *ngIf="pwForm.value.newPassword">
+              <div class="strength-fill" [style.width.%]="pwStrength*25"
+                   [style.background]="['#E24B4A','#F09500','#E8D000','#1B7A4E'][pwStrength-1]">
+              </div>
+            </div>
+            <span class="strength-label" *ngIf="pwForm.value.newPassword">
+              {{ ['Très faible','Faible','Correct','Fort'][pwStrength-1] }}
+            </span>
+          </div>
+
+          <div class="field-group">
+            <label>Code Google Authenticator *
+              <span class="totp-required-tag">2FA requis</span>
+            </label>
+            <div class="digit-row-sm">
+              <input *ngFor="let _ of [0,1,2,3,4,5]; let i=index"
+                     #pwDigit type="text" inputmode="numeric" maxlength="1"
+                     class="digit-sm"
+                     [value]="pwTotpDigits[i]"
+                     (input)="onPwTotpInput($event, i)"
+                     (keydown)="onPwTotpKeydown($event, i)"
+                     (paste)="onPwTotpPaste($event)"/>
+            </div>
+          </div>
+
+          <button type="submit" class="btn-primary"
+                  [disabled]="pwForm.invalid || pwTotpCode.length < 6 || pwLoading">
+            <span class="spin-sm" *ngIf="pwLoading"></span>
+            {{ pwLoading ? 'Modification…' : 'Changer le mot de passe' }}
+          </button>
+
+        </form>
+      </div>
+
+      <!-- ══ SECTION: Sessions ══ -->
+      <div class="card section-card" *ngIf="activeSection==='sessions'">
+        <div class="section-header-row">
+          <div class="section-icon">
+            <svg width="22" height="22" viewBox="0 0 24 24" fill="none">
+              <rect x="2" y="3" width="20" height="14" rx="2" stroke="var(--ab-primary)" stroke-width="1.75"/>
+              <path d="M8 21h8M12 17v4" stroke="var(--ab-primary)" stroke-width="1.75" stroke-linecap="round"/>
+            </svg>
+          </div>
+          <div>
+            <h3>Sessions actives</h3>
+            <p>Déconnectez-vous des appareils non reconnus</p>
+          </div>
+        </div>
+
+        <div class="session-item current">
+          <div class="session-device">
+            <svg width="18" height="18" viewBox="0 0 24 24" fill="none">
+              <rect x="2" y="3" width="20" height="14" rx="2" stroke="currentColor" stroke-width="1.75"/>
+              <path d="M8 21h8M12 17v4" stroke="currentColor" stroke-width="1.75" stroke-linecap="round"/>
+            </svg>
+            <div>
+              <strong>Session actuelle</strong>
+              <span>{{ user?.lastLoginIp || 'IP inconnue' }} · Maintenant</span>
+            </div>
+          </div>
+          <span class="session-badge current-badge">En cours</span>
+        </div>
+
+        <div class="divider" style="margin:1rem 0"></div>
+        <button class="btn-danger-outline" (click)="revokeAllSessions()">
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="none">
+            <path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4M16 17l5-5-5-5M21 12H9" stroke="currentColor" stroke-width="1.75" stroke-linecap="round"/>
+          </svg>
+          Déconnecter tous les autres appareils
+        </button>
+      </div>
+
+    </div>
+  </div>
+</div>

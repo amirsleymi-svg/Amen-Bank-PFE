@@ -1,0 +1,27 @@
+# Local development overrides — hot-reload, exposed ports, debug
+# This file is automatically merged with docker-compose.yml by Docker Compose
+version: '3.9'
+
+services:
+  backend:
+    environment:
+      SPRING_PROFILES_ACTIVE: dev
+      SPRING_JPA_SHOW_SQL: "true"
+    volumes:
+      - ./backend/src:/app/src:ro   # source mount for IDE
+    ports:
+      - "5005:5005"   # JDWP remote debug port
+    command: >
+      java -agentlib:jdwp=transport=dt_socket,server=y,suspend=n,address=*:5005
+           -jar app.jar
+
+  frontend:
+    # In dev, use ng serve directly (not Docker)
+    profiles: ["production"]
+
+  chatbot:
+    environment:
+      DEBUG: "true"
+    volumes:
+      - ./chatbot:/app:ro
+    command: uvicorn app.main:app --host 0.0.0.0 --port 8000 --reload

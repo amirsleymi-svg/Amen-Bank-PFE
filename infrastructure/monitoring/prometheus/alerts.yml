@@ -1,0 +1,35 @@
+groups:
+  - name: amenbank_alerts
+    rules:
+      - alert: BackendDown
+        expr: up{job="spring-backend"} == 0
+        for: 1m
+        labels:
+          severity: critical
+        annotations:
+          summary: "Amen Bank backend is down"
+          description: "Spring Boot backend has been unreachable for > 1 minute"
+
+      - alert: HighErrorRate
+        expr: rate(http_server_requests_seconds_count{status=~"5.."}[5m]) > 0.1
+        for: 2m
+        labels:
+          severity: warning
+        annotations:
+          summary: "High 5xx error rate detected"
+
+      - alert: DatabaseConnectionsHigh
+        expr: hikaricp_connections_active > 15
+        for: 5m
+        labels:
+          severity: warning
+        annotations:
+          summary: "Database connection pool near capacity"
+
+      - alert: SlowResponses
+        expr: histogram_quantile(0.95, rate(http_server_requests_seconds_bucket[5m])) > 2
+        for: 5m
+        labels:
+          severity: warning
+        annotations:
+          summary: "95th percentile response time > 2s"

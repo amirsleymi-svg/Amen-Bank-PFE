@@ -1,0 +1,456 @@
+<!-- transfers.component.html -->
+<div class="page-container">
+
+  <!-- Page header -->
+  <div class="page-header">
+    <div class="page-header-left">
+      <h2>Virements</h2>
+      <p>Effectuez et gérez vos virements bancaires</p>
+    </div>
+    <div class="header-tabs">
+      <button class="tab-btn" [class.active]="activeTab==='simple'"   (click)="setTab('simple')">
+        <svg width="15" height="15" viewBox="0 0 24 24" fill="none">
+          <path d="M17 3l4 4-4 4M3 7h18" stroke="currentColor" stroke-width="2" stroke-linecap="round"/>
+        </svg>
+        Simple
+        <span class="tab-badge-2fa">2FA</span>
+      </button>
+      <button class="tab-btn" [class.active]="activeTab==='batch'"   (click)="setTab('batch')">
+        <svg width="15" height="15" viewBox="0 0 24 24" fill="none">
+          <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z" stroke="currentColor" stroke-width="1.75"/>
+          <path d="M14 2v6h6M8 13h8M8 17h5" stroke="currentColor" stroke-width="1.75" stroke-linecap="round"/>
+        </svg>
+        Par lot CSV
+      </button>
+      <button class="tab-btn" [class.active]="activeTab==='history'" (click)="setTab('history')">
+        <svg width="15" height="15" viewBox="0 0 24 24" fill="none">
+          <circle cx="12" cy="12" r="10" stroke="currentColor" stroke-width="1.75"/>
+          <polyline points="12 6 12 12 16 14" stroke="currentColor" stroke-width="1.75" stroke-linecap="round"/>
+        </svg>
+        Historique
+      </button>
+    </div>
+  </div>
+
+  <!-- ══ TAB: SIMPLE TRANSFER with Google Authenticator 2FA ══ -->
+  <ng-container *ngIf="activeTab === 'simple'">
+    <div class="transfer-layout">
+
+      <!-- Form card -->
+      <div class="card form-card">
+
+        <!-- SUCCESS STATE -->
+        <div class="success-panel" *ngIf="transferSuccess">
+          <div class="success-ring">
+            <svg width="44" height="44" viewBox="0 0 24 24" fill="none">
+              <path d="M20 6L9 17l-5-5" stroke="white" stroke-width="2.5" stroke-linecap="round"/>
+            </svg>
+          </div>
+          <h3>Virement effectué !</h3>
+          <div class="success-amount-row">
+            <span class="succ-amount">{{ lastTransfer?.amount | number:'1.3-3' }} TND</span>
+            <svg width="18" height="18" viewBox="0 0 24 24" fill="none">
+              <path d="M5 12h14" stroke="#1B7A4E" stroke-width="2" stroke-linecap="round"/>
+              <path d="M12 5l7 7-7 7" stroke="#1B7A4E" stroke-width="2" stroke-linecap="round"/>
+            </svg>
+            <span class="succ-to">{{ lastTransfer?.toName }}</span>
+          </div>
+          <p class="succ-ref">Référence : <strong>#{{ lastTransfer?.id }}</strong></p>
+          <div class="succ-actions">
+            <button class="btn-primary" (click)="resetTransfer()">Nouveau virement</button>
+            <button class="btn-outline" (click)="setTab('history')">Voir l'historique</button>
+          </div>
+        </div>
+
+        <!-- FORM ERROR -->
+        <div class="alert-error" *ngIf="formError && !transferSuccess">
+          <svg width="16" height="16" viewBox="0 0 16 16" fill="none">
+            <circle cx="8" cy="8" r="7" stroke="currentColor" stroke-width="1.5"/>
+            <path d="M8 5v3M8 11v.3" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/>
+          </svg>
+          {{ formError }}
+        </div>
+
+        <!-- TRANSFER FORM -->
+        <form [formGroup]="transferForm" (ngSubmit)="openTotpModal()"
+              *ngIf="!transferSuccess" class="transfer-form" autocomplete="off">
+
+          <!-- Section: from account -->
+          <div class="section-label">
+            <svg width="14" height="14" viewBox="0 0 24 24" fill="none">
+              <rect x="2" y="5" width="20" height="14" rx="2" stroke="currentColor" stroke-width="1.75"/>
+              <path d="M2 10h20" stroke="currentColor" stroke-width="1.75"/>
+            </svg>
+            Compte à débiter
+          </div>
+
+          <div class="account-grid">
+            <div *ngFor="let acc of accounts"
+                 class="account-tile"
+                 [class.selected]="tf['fromAccountId'].value == acc.id"
+                 (click)="tf['fromAccountId'].setValue(acc.id)">
+              <div class="tile-top">
+                <span class="tile-type-dot" [class]="'dot-'+acc.accountType.toLowerCase()"></span>
+                <span class="tile-type">{{ accountTypeLabel(acc.accountType) }}</span>
+                <svg *ngIf="tf['fromAccountId'].value == acc.id" class="tile-check"
+                     width="14" height="14" viewBox="0 0 24 24" fill="none">
+                  <circle cx="12" cy="12" r="10" fill="#0A3F6B"/>
+                  <path d="M8 12l3 3 5-5" stroke="white" stroke-width="2" stroke-linecap="round"/>
+                </svg>
+              </div>
+              <span class="tile-balance">
+                {{ acc.availableBalance | number:'1.3-3' }}
+                <em>TND</em>
+              </span>
+              <span class="tile-iban">{{ acc.iban | slice:0:10 }}…</span>
+            </div>
+          </div>
+
+          <div class="arrow-divider">
+            <svg width="22" height="22" viewBox="0 0 24 24" fill="none">
+              <path d="M12 5v14M5 12l7 7 7-7"
+                    stroke="var(--ab-muted)" stroke-width="1.75" stroke-linecap="round"/>
+            </svg>
+          </div>
+
+          <!-- Section: beneficiary -->
+          <div class="section-label">
+            <svg width="14" height="14" viewBox="0 0 24 24" fill="none">
+              <path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2" stroke="currentColor" stroke-width="1.75"/>
+              <circle cx="12" cy="7" r="4" stroke="currentColor" stroke-width="1.75"/>
+            </svg>
+            Bénéficiaire
+          </div>
+
+          <div class="field-group">
+            <label>Nom complet *</label>
+            <div class="inp-wrap" [class.err]="tf['toName'].touched && tf['toName'].invalid">
+              <svg class="inp-icon" width="17" height="17" viewBox="0 0 24 24" fill="none">
+                <path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2" stroke="currentColor" stroke-width="1.5"/>
+                <circle cx="12" cy="7" r="4" stroke="currentColor" stroke-width="1.5"/>
+              </svg>
+              <input formControlName="toName" type="text"
+                     placeholder="Mohamed Ben Ali" class="form-inp"/>
+            </div>
+            <span class="field-error" *ngIf="tf['toName'].touched && tf['toName'].errors?.['required']">Requis</span>
+          </div>
+
+          <div class="field-group">
+            <label>IBAN *</label>
+            <div class="inp-wrap" [class.err]="tf['toIban'].touched && tf['toIban'].invalid">
+              <svg class="inp-icon" width="17" height="17" viewBox="0 0 24 24" fill="none">
+                <rect x="2" y="5" width="20" height="14" rx="2" stroke="currentColor" stroke-width="1.5"/>
+                <path d="M2 10h20" stroke="currentColor" stroke-width="1.5"/>
+              </svg>
+              <input formControlName="toIban" type="text"
+                     placeholder="TN59 XXXX XXXX XXXX XXXX XXXX"
+                     class="form-inp mono-inp"
+                     (input)="formatIbanInput($event)" spellcheck="false"/>
+              <span class="iban-valid" *ngIf="tf['toIban'].valid && tf['toIban'].value">
+                <svg width="16" height="16" viewBox="0 0 24 24" fill="none">
+                  <circle cx="12" cy="12" r="10" fill="rgba(27,122,78,.12)"/>
+                  <path d="M8 12l3 3 5-5" stroke="#1B7A4E" stroke-width="2" stroke-linecap="round"/>
+                </svg>
+              </span>
+            </div>
+            <span class="field-error" *ngIf="tf['toIban'].touched && tf['toIban'].errors?.['pattern']">
+              Format IBAN invalide
+            </span>
+          </div>
+
+          <!-- Section: amount & details -->
+          <div class="section-label mt-s">
+            <svg width="14" height="14" viewBox="0 0 24 24" fill="none">
+              <circle cx="12" cy="12" r="10" stroke="currentColor" stroke-width="1.75"/>
+              <path d="M12 8v4M12 16h.01" stroke="currentColor" stroke-width="1.75" stroke-linecap="round"/>
+            </svg>
+            Détails du virement
+          </div>
+
+          <div class="amount-field">
+            <label>Montant *</label>
+            <div class="amount-wrap" [class.err]="tf['amount'].touched && tf['amount'].invalid">
+              <input formControlName="amount" type="number"
+                     placeholder="0.000" step="0.001" min="0.001" class="amount-inp"/>
+              <div class="amount-right">
+                <span class="currency-badge">TND</span>
+              </div>
+            </div>
+            <span class="field-error" *ngIf="tf['amount'].touched && tf['amount'].errors?.['min']">
+              Montant minimum 0.001 TND
+            </span>
+          </div>
+
+          <div class="two-col">
+            <div class="field-group">
+              <label>Libellé <span class="opt-tag">optionnel</span></label>
+              <div class="inp-wrap">
+                <svg class="inp-icon" width="17" height="17" viewBox="0 0 24 24" fill="none">
+                  <path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"
+                        stroke="currentColor" stroke-width="1.5"/>
+                </svg>
+                <input formControlName="label" type="text"
+                       placeholder="Motif…" class="form-inp" maxlength="255"/>
+              </div>
+            </div>
+            <div class="field-group">
+              <label>Planifier <span class="opt-tag">optionnel</span></label>
+              <div class="inp-wrap">
+                <svg class="inp-icon" width="17" height="17" viewBox="0 0 24 24" fill="none">
+                  <rect x="3" y="4" width="18" height="18" rx="2" stroke="currentColor" stroke-width="1.5"/>
+                  <path d="M3 10h18M8 4V2M16 4V2" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/>
+                </svg>
+                <input formControlName="scheduledDate" type="date"
+                       [min]="tomorrow" class="form-inp"/>
+              </div>
+            </div>
+          </div>
+
+          <!-- 2FA notice banner -->
+          <div class="twofa-notice">
+            <div class="twofa-notice-icon">
+              <svg width="20" height="20" viewBox="0 0 24 24" fill="none">
+                <path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"
+                      fill="rgba(10,63,107,0.10)"
+                      stroke="#0A3F6B" stroke-width="1.75" stroke-linejoin="round"/>
+                <path d="M9 12l2 2 4-4" stroke="#0A3F6B" stroke-width="1.75" stroke-linecap="round"/>
+              </svg>
+            </div>
+            <div class="twofa-notice-text">
+              <strong>Virement protégé par Google Authenticator</strong>
+              <span>Un code 2FA sera requis pour confirmer cette opération</span>
+            </div>
+          </div>
+
+          <!-- Submit button -->
+          <button type="submit" class="btn-submit-transfer"
+                  [disabled]="transferForm.invalid || isLoading">
+            <svg width="18" height="18" viewBox="0 0 24 24" fill="none">
+              <path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"
+                    stroke="white" stroke-width="1.75" stroke-linejoin="round"/>
+            </svg>
+            Procéder au virement
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none">
+              <path d="M5 12h14M12 5l7 7-7 7" stroke="white" stroke-width="2" stroke-linecap="round"/>
+            </svg>
+          </button>
+
+        </form>
+      </div>
+
+      <!-- Info aside -->
+      <aside class="info-aside">
+        <div class="card info-card">
+          <h4>Limite journalière</h4>
+          <div class="limit-row" *ngFor="let acc of accounts">
+            <div class="limit-head">
+              <span>{{ accountTypeLabel(acc.accountType) }}</span>
+              <span>{{ dailyUsed | number:'1.0-0' }} / {{ acc.dailyLimit | number:'1.0-0' }} TND</span>
+            </div>
+            <div class="limit-bar">
+              <div class="limit-fill"
+                   [style.width.%]="(dailyUsed / acc.dailyLimit)*100"
+                   [class.warn]="(dailyUsed / acc.dailyLimit)>0.8"></div>
+            </div>
+          </div>
+        </div>
+
+        <div class="card info-card totp-guide-card">
+          <h4>
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none">
+              <path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"
+                    stroke="#0A3F6B" stroke-width="1.75" stroke-linejoin="round"/>
+            </svg>
+            Comment ça marche ?
+          </h4>
+          <ol class="guide-steps">
+            <li>Remplissez le formulaire et cliquez sur <em>Procéder</em></li>
+            <li>Une fenêtre de sécurité apparaît</li>
+            <li>Ouvrez <strong>Google Authenticator</strong> sur votre mobile</li>
+            <li>Entrez le code à <strong>6 chiffres</strong> affiché</li>
+            <li>Le virement est exécuté immédiatement ✓</li>
+          </ol>
+          <div class="guide-footer">
+            <svg width="14" height="14" viewBox="0 0 24 24" fill="none">
+              <circle cx="12" cy="12" r="10" stroke="#0A3F6B" stroke-width="1.5"/>
+              <polyline points="12 6 12 12 16 14" stroke="#0A3F6B" stroke-width="1.5" stroke-linecap="round"/>
+            </svg>
+            Code renouvelé toutes les 30s
+          </div>
+        </div>
+
+        <div class="card info-card tips-card">
+          <h4>Conseils</h4>
+          <ul>
+            <li>Vérifiez l'IBAN — les virements sont irréversibles</li>
+            <li>Ne partagez jamais votre code Google Authenticator</li>
+            <li>Planifiez pour une date future si besoin</li>
+          </ul>
+        </div>
+      </aside>
+    </div>
+  </ng-container>
+
+  <!-- ══ TAB: BATCH (no 2FA) ══ -->
+  <ng-container *ngIf="activeTab === 'batch'">
+    <div class="card batch-card">
+      <div class="card-header-row">
+        <div class="card-icon-wrap">
+          <svg width="20" height="20" viewBox="0 0 24 24" fill="none">
+            <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"
+                  stroke="var(--ab-primary)" stroke-width="1.75"/>
+            <path d="M14 2v6h6M8 13h8M8 17h5" stroke="var(--ab-primary)" stroke-width="1.75" stroke-linecap="round"/>
+          </svg>
+        </div>
+        <div>
+          <h3>Virements par lot</h3>
+          <p>Importez un fichier CSV — aucun code 2FA requis</p>
+        </div>
+        <button class="btn-outline-xs ml-auto" (click)="downloadTemplate()">
+          <svg width="14" height="14" viewBox="0 0 24 24" fill="none">
+            <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4M7 10l5 5 5-5M12 15V3"
+                  stroke="currentColor" stroke-width="1.75" stroke-linecap="round"/>
+          </svg>
+          Télécharger le modèle
+        </button>
+      </div>
+
+      <div class="no-2fa-badge">
+        <svg width="14" height="14" viewBox="0 0 24 24" fill="none">
+          <circle cx="12" cy="12" r="10" stroke="currentColor" stroke-width="1.5"/>
+          <path d="M9 12l2 2 4-4" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/>
+        </svg>
+        Traitement automatisé — pas de code 2FA
+      </div>
+
+      <div class="drop-zone"
+           [class.dragging]="isDragging"
+           [class.has-file]="batchFile"
+           (dragover)="$event.preventDefault(); isDragging=true"
+           (dragleave)="isDragging=false"
+           (drop)="onDrop($event)"
+           (click)="fileInput.click()">
+        <input #fileInput type="file" accept=".csv" hidden (change)="onFileSelect($event)"/>
+        <ng-container *ngIf="!batchFile">
+          <svg width="36" height="36" viewBox="0 0 24 24" fill="none">
+            <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4" stroke="#9BA8BC" stroke-width="1.5"/>
+            <polyline points="17 8 12 3 7 8" stroke="#9BA8BC" stroke-width="1.5" stroke-linecap="round"/>
+            <line x1="12" y1="3" x2="12" y2="15" stroke="#9BA8BC" stroke-width="1.5" stroke-linecap="round"/>
+          </svg>
+          <p class="drop-title">Glissez votre CSV ici</p>
+          <p class="drop-sub">ou cliquez pour parcourir (max 5 MB)</p>
+        </ng-container>
+        <ng-container *ngIf="batchFile">
+          <svg width="24" height="24" viewBox="0 0 24 24" fill="none">
+            <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z" stroke="#1B7A4E" stroke-width="1.75"/>
+            <path d="M14 2v6h6" stroke="#1B7A4E" stroke-width="1.75"/>
+          </svg>
+          <span class="file-name">{{ batchFile.name }}</span>
+          <button class="btn-remove" (click)="removeBatch($event)">× Retirer</button>
+        </ng-container>
+      </div>
+
+      <ng-container *ngIf="batchResult">
+        <div class="batch-chips">
+          <span class="chip chip-total">{{ batchResult.totalRows }} lignes</span>
+          <span class="chip chip-ok">{{ batchResult.validRows }} valides</span>
+          <span class="chip chip-err" *ngIf="batchResult.errorRows">{{ batchResult.errorRows }} erreurs</span>
+          <span class="chip chip-amount">{{ batchResult.totalAmount | number:'1.3-3' }} TND</span>
+        </div>
+        <div class="tbl-scroll">
+          <table class="batch-tbl">
+            <thead><tr><th>#</th><th>IBAN</th><th>Bénéficiaire</th><th>Montant</th><th>Statut</th></tr></thead>
+            <tbody>
+              <tr *ngFor="let r of batchResult.rows" [class.row-err]="r.status==='ERROR'">
+                <td>{{ r.row }}</td>
+                <td class="mono">{{ r.iban || '—' }}</td>
+                <td>{{ r.name || '—' }}</td>
+                <td>{{ r.amount ? (r.amount | number:'1.3-3') + ' TND' : '—' }}</td>
+                <td>
+                  <span class="pill" [class.pill-ok]="r.status==='VALID'" [class.pill-err]="r.status==='ERROR'">
+                    {{ r.status === 'VALID' ? '✓' : '✗ ' + r.error }}
+                  </span>
+                </td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+        <div class="batch-actions" *ngIf="batchResult.validRows > 0">
+          <div class="field-group inline-field">
+            <label>Compte débiteur</label>
+            <select [(ngModel)]="batchAccountId" class="form-select">
+              <option *ngFor="let acc of accounts" [value]="acc.id">
+                {{ acc.accountNumber }} — {{ acc.availableBalance | number:'1.3-3' }} TND
+              </option>
+            </select>
+          </div>
+          <button class="btn-primary" (click)="confirmBatch()" [disabled]="batchLoading">
+            <span class="spin-sm" *ngIf="batchLoading"></span>
+            Confirmer {{ batchResult.validRows }} virement(s)
+          </button>
+        </div>
+      </ng-container>
+
+      <button class="btn-primary" *ngIf="batchFile && !batchResult" (click)="parseBatch()">
+        Analyser le fichier
+      </button>
+    </div>
+  </ng-container>
+
+  <!-- ══ TAB: HISTORY ══ -->
+  <ng-container *ngIf="activeTab === 'history'">
+    <div class="card">
+      <div class="card-header-row">
+        <h3>Historique des virements</h3>
+        <select [(ngModel)]="historyFilter" class="form-select sm">
+          <option value="">Tous les statuts</option>
+          <option value="COMPLETED">Effectués</option>
+          <option value="PENDING">En attente</option>
+          <option value="FAILED">Échoués</option>
+          <option value="CANCELLED">Annulés</option>
+        </select>
+      </div>
+      <div class="history-list">
+        <div class="history-item" *ngFor="let t of filteredTransfers">
+          <div class="hi-icon" [class]="'hi-'+t.status.toLowerCase()">
+            <svg width="14" height="14" viewBox="0 0 24 24" fill="none">
+              <path d="M17 3l4 4-4 4M3 7h18" stroke="currentColor" stroke-width="2" stroke-linecap="round"/>
+            </svg>
+          </div>
+          <div class="hi-info">
+            <span class="hi-name">{{ t.toName }}</span>
+            <span class="hi-iban">{{ formatIban(t.toIban) }}</span>
+            <span class="hi-date">{{ t.createdAt | date:'dd/MM/yyyy HH:mm' }}</span>
+          </div>
+          <div class="hi-right">
+            <span class="hi-amount">-{{ t.amount | number:'1.3-3' }} TND</span>
+            <span class="hi-status" [class]="'hs-'+t.status.toLowerCase()">{{ statusLabel(t.status) }}</span>
+            <button class="btn-cancel-sm" *ngIf="t.status==='PENDING'" (click)="cancelTransfer(t.id)">Annuler</button>
+          </div>
+        </div>
+        <div class="empty-state" *ngIf="filteredTransfers.length === 0">
+          <svg width="44" height="44" viewBox="0 0 24 24" fill="none">
+            <path d="M17 3l4 4-4 4M3 7h18M7 21l-4-4 4-4M21 17H3" stroke="#9BA8BC" stroke-width="1.5" stroke-linecap="round"/>
+          </svg>
+          <p>Aucun virement trouvé</p>
+        </div>
+      </div>
+      <div class="pagination" *ngIf="totalPages > 1">
+        <button [disabled]="currentPage===0" (click)="changePage(currentPage-1)">← Préc.</button>
+        <span>{{ currentPage+1 }} / {{ totalPages }}</span>
+        <button [disabled]="currentPage>=totalPages-1" (click)="changePage(currentPage+1)">Suiv. →</button>
+      </div>
+    </div>
+  </ng-container>
+
+</div>
+
+<!-- ══ GOOGLE AUTHENTICATOR TOTP MODAL ══ -->
+<app-totp-modal
+  [visible]="totpModalOpen"
+  [loading]="totpLoading"
+  [error]="totpError"
+  [summary]="totpSummary"
+  (confirmed)="onTotpConfirmed($event)"
+  (cancelled)="onTotpCancelled()">
+</app-totp-modal>

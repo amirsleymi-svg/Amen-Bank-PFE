@@ -1,0 +1,3 @@
+@use '../auth.styles.scss';
+.field-row { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; }
+@media (max-width: 480px) { .field-row { grid-template-columns: 1fr; } }

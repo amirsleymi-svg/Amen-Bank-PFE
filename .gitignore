@@ -1,0 +1,54 @@
+# ─── Environment & Secrets ────────────────────────────────────────
+.env
+*.env.local
+*.env.production
+secrets/
+
+# ─── Backend (Java/Maven) ─────────────────────────────────────────
+backend/target/
+backend/.mvn/wrapper/maven-wrapper.jar
+backend/*.iml
+*.class
+*.jar
+*.war
+!backend/src/
+.idea/
+*.iws
+*.ipr
+
+# ─── Frontend (Angular/Node) ──────────────────────────────────────
+frontend/node_modules/
+frontend/dist/
+frontend/.angular/
+frontend/coverage/
+frontend/*.js.map
+
+# ─── Chatbot (Python) ─────────────────────────────────────────────
+chatbot/__pycache__/
+chatbot/**/__pycache__/
+chatbot/*.pyc
+chatbot/.venv/
+chatbot/venv/
+chatbot/.pytest_cache/
+chatbot/.ruff_cache/
+chatbot/*.egg-info/
+
+# ─── Docker volumes / data ────────────────────────────────────────
+data/
+uploads/
+logs/
+*.log
+
+# ─── OS ───────────────────────────────────────────────────────────
+.DS_Store
+Thumbs.db
+.vscode/
+*.swp
+*.swo
+
+# ─── SSL certs (generate locally) ────────────────────────────────
+infrastructure/nginx/ssl/
+
+# ─── Cypress artifacts ───────────────────────────────────────────
+frontend/cypress/screenshots/
+frontend/cypress/videos/

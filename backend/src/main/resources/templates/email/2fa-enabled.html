@@ -1,0 +1,11 @@
+<!DOCTYPE html><html xmlns:th="http://www.thymeleaf.org" lang="fr"><head><meta charset="UTF-8"/><style>body{margin:0;background:#F0F3F8;font-family:'Segoe UI',Arial,sans-serif}.wrapper{max-width:600px;margin:0 auto;padding:24px 16px}.card{background:#fff;border-radius:16px;border:1px solid #E2E8F2}.header{background:#0A3F6B;padding:28px 32px;text-align:center;border-radius:16px 16px 0 0}.logo{color:white;font-size:22px;font-weight:700}.body{padding:32px}.footer{padding:20px 32px;text-align:center;font-size:12px;color:#9BA8BC;border-top:1px solid #E2E8F2}</style></head>
+<body><div class="wrapper"><div class="card">
+<div class="header"><div class="logo">🏦 Amen Bank</div></div>
+<div class="body">
+<p style="font-size:18px;font-weight:700;color:#1A2540">🔐 Double authentification activée</p>
+<p style="font-size:15px;line-height:1.7;color:#4A5568">Bonjour <strong th:text="${name}"></strong>, la double authentification (2FA) a été activée sur votre compte.</p>
+<div style="background:#EDF9F3;border-left:4px solid #1B7A4E;border-radius:0 8px 8px 0;padding:14px;margin:16px 0;font-size:14px;color:#1B7A4E">✅ Désormais, toutes vos opérations sensibles nécessiteront un code <strong>Google Authenticator</strong>.</div>
+<p style="font-size:13px;color:#9BA8BC">Conservez précieusement vos codes de secours dans un endroit sûr.</p>
+</div>
+<div class="footer">© 2024 Amen Bank</div>
+</div></div></body></html>

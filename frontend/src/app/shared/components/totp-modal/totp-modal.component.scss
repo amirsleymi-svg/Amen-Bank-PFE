@@ -1,0 +1,314 @@
+/* ───────────────────────────────────────────────────────────────
+   TOTP Confirmation Modal — Google Authenticator
+─────────────────────────────────────────────────────────────── */
+
+/* ── Backdrop ──────────────────────────────────────────────────── */
+.modal-backdrop {
+  position: fixed;
+  inset: 0;
+  background: rgba(10, 20, 40, 0.55);
+  backdrop-filter: blur(4px);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 1000;
+  padding: 1rem;
+  animation: fadeIn 0.18s ease;
+}
+
+@keyframes fadeIn {
+  from { opacity: 0 }
+  to   { opacity: 1 }
+}
+
+/* ── Dialog box ────────────────────────────────────────────────── */
+.modal-box {
+  background: #fff;
+  border-radius: 20px;
+  width: 100%;
+  max-width: 400px;
+  padding: 2rem;
+  box-shadow: 0 24px 64px rgba(10, 63, 107, 0.22);
+  display: flex;
+  flex-direction: column;
+  gap: 1.25rem;
+  animation: slideUp 0.22s cubic-bezier(0.34, 1.56, 0.64, 1);
+}
+
+@keyframes slideUp {
+  from { transform: translateY(24px) scale(0.97); opacity: 0 }
+  to   { transform: translateY(0)     scale(1);    opacity: 1 }
+}
+
+/* ── Header row ────────────────────────────────────────────────── */
+.modal-header {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+}
+
+.modal-shield {
+  width: 56px;
+  height: 56px;
+  background: rgba(10, 63, 107, 0.07);
+  border-radius: 14px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.btn-close-modal {
+  width: 32px;
+  height: 32px;
+  border: none;
+  background: #F4F6F9;
+  border-radius: 8px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  color: #6B7A99;
+  transition: background 0.15s, color 0.15s;
+  flex-shrink: 0;
+
+  &:hover:not(:disabled) { background: #E2E8F2; color: #1A2540; }
+  &:disabled { opacity: 0.4; cursor: default; }
+}
+
+/* ── Title block ───────────────────────────────────────────────── */
+.modal-title-block {
+  h3 {
+    font-size: 1.2rem;
+    font-weight: 700;
+    color: #1A2540;
+    margin: 0 0 6px;
+    letter-spacing: -0.02em;
+  }
+
+  p {
+    font-size: 0.875rem;
+    color: #6B7A99;
+    margin: 0;
+    line-height: 1.5;
+
+    strong { color: #1A2540; }
+  }
+}
+
+/* ── Operation summary card ────────────────────────────────────── */
+.op-summary {
+  background: #F4F8FD;
+  border: 1px solid #D8E6F5;
+  border-radius: 12px;
+  padding: 0.9rem 1rem;
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+.op-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+}
+
+.op-label {
+  font-size: 0.82rem;
+  color: #6B7A99;
+}
+
+.op-value {
+  font-size: 0.875rem;
+  font-weight: 600;
+  color: #1A2540;
+
+  &.op-highlight {
+    font-size: 1rem;
+    color: #0A3F6B;
+    font-weight: 700;
+  }
+}
+
+/* ── Error banner ──────────────────────────────────────────────── */
+.totp-error-banner {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 0.7rem 0.9rem;
+  background: #FEF0EF;
+  border: 1px solid rgba(197, 55, 42, 0.25);
+  border-radius: 10px;
+  font-size: 0.855rem;
+  color: #C5372A;
+  font-weight: 500;
+  animation: fadeIn 0.2s ease;
+}
+
+/* ── Digit row ─────────────────────────────────────────────────── */
+.digit-row {
+  display: flex;
+  justify-content: center;
+  gap: 8px;
+
+  &.shake {
+    animation: shake 0.5s cubic-bezier(0.36, 0.07, 0.19, 0.97);
+  }
+}
+
+@keyframes shake {
+  10%, 90% { transform: translateX(-3px) }
+  20%, 80% { transform: translateX( 4px) }
+  30%, 50%, 70% { transform: translateX(-5px) }
+  40%, 60% { transform: translateX( 5px) }
+}
+
+.digit-box {
+  width: 48px;
+  height: 58px;
+  text-align: center;
+  font-size: 1.6rem;
+  font-weight: 700;
+  color: #0A3F6B;
+  border: 2px solid #DDE3ED;
+  border-radius: 12px;
+  background: #FAFBFC;
+  outline: none;
+  caret-color: transparent;
+  transition: border-color 0.18s, background 0.18s, box-shadow 0.18s, transform 0.12s;
+
+  /* Hide the text cursor blink */
+  cursor: default;
+
+  &:focus {
+    border-color: #0A3F6B;
+    background: #fff;
+    box-shadow: 0 0 0 3px rgba(10, 63, 107, 0.12);
+    transform: scale(1.05);
+  }
+
+  &.filled {
+    border-color: #0A3F6B;
+    background: rgba(10, 63, 107, 0.04);
+  }
+
+  &.errored {
+    border-color: #C5372A;
+    background: #FEF0EF;
+    color: #C5372A;
+  }
+
+  /* Mobile: slightly smaller */
+  @media (max-width: 380px) {
+    width: 42px;
+    height: 52px;
+    font-size: 1.4rem;
+    border-radius: 10px;
+  }
+}
+
+/* ── Timer row ─────────────────────────────────────────────────── */
+.timer-row {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+}
+
+.timer-svg {
+  flex-shrink: 0;
+}
+
+.timer-label {
+  font-size: 0.82rem;
+  color: #6B7A99;
+  font-weight: 500;
+  transition: color 0.3s;
+
+  &.expiring {
+    color: #C5372A;
+    font-weight: 600;
+    animation: pulse 1s ease infinite;
+  }
+}
+
+@keyframes pulse {
+  0%, 100% { opacity: 1 }
+  50%       { opacity: 0.55 }
+}
+
+/* ── Hint text ─────────────────────────────────────────────────── */
+.totp-hint {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 5px;
+  font-size: 0.78rem;
+  color: #9BA8BC;
+  margin: 0;
+  text-align: center;
+
+  svg { flex-shrink: 0; }
+}
+
+/* ── Footer buttons ────────────────────────────────────────────── */
+.modal-footer {
+  display: flex;
+  gap: 10px;
+  margin-top: 0.25rem;
+}
+
+.btn-cancel-modal {
+  flex: 1;
+  height: 46px;
+  background: #F4F6F9;
+  color: #6B7A99;
+  border: 1.5px solid #DDE3ED;
+  border-radius: 10px;
+  font-size: 0.9rem;
+  font-weight: 600;
+  cursor: pointer;
+  transition: background 0.15s, color 0.15s;
+
+  &:hover:not(:disabled) { background: #E2E8F2; color: #1A2540; }
+  &:disabled { opacity: 0.5; cursor: not-allowed; }
+}
+
+.btn-confirm-modal {
+  flex: 2;
+  height: 46px;
+  background: #0A3F6B;
+  color: white;
+  border: none;
+  border-radius: 10px;
+  font-size: 0.9rem;
+  font-weight: 700;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 7px;
+  transition: background 0.15s, box-shadow 0.15s, transform 0.1s;
+
+  &:hover:not(:disabled) {
+    background: #1565A0;
+    box-shadow: 0 4px 16px rgba(10, 63, 107, 0.28);
+  }
+
+  &:active:not(:disabled) { transform: scale(0.99); }
+
+  &:disabled {
+    opacity: 0.45;
+    cursor: not-allowed;
+  }
+}
+
+.spinner-sm {
+  width: 16px;
+  height: 16px;
+  border: 2.5px solid rgba(255,255,255,0.35);
+  border-top-color: white;
+  border-radius: 50%;
+  animation: spin 0.65s linear infinite;
+}
+
+@keyframes spin { to { transform: rotate(360deg) } }

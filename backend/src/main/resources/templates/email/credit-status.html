@@ -1,0 +1,12 @@
+<!DOCTYPE html><html xmlns:th="http://www.thymeleaf.org" lang="fr"><head><meta charset="UTF-8"/><style>body{margin:0;background:#F0F3F8;font-family:'Segoe UI',Arial,sans-serif}.wrapper{max-width:600px;margin:0 auto;padding:24px 16px}.card{background:#fff;border-radius:16px;border:1px solid #E2E8F2}.header{background:#0A3F6B;padding:28px 32px;text-align:center;border-radius:16px 16px 0 0}.logo{color:white;font-size:22px;font-weight:700}.body{padding:32px}.btn{display:inline-block;background:#0A3F6B;color:white!important;text-decoration:none;padding:14px 32px;border-radius:10px;font-weight:700;font-size:15px;margin:20px 0}.footer{padding:20px 32px;text-align:center;font-size:12px;color:#9BA8BC;border-top:1px solid #E2E8F2}</style></head>
+<body><div class="wrapper"><div class="card">
+<div class="header"><div class="logo">🏦 Amen Bank</div></div>
+<div class="body">
+<p style="font-size:18px;font-weight:700;color:#1A2540;margin-bottom:16px">Mise à jour de votre demande de crédit</p>
+<p style="font-size:15px;line-height:1.7;color:#4A5568">Bonjour <strong th:text="${name}"></strong>,</p>
+<div th:if="${status == 'APPROVED'}" style="background:#EDF9F3;border-left:4px solid #1B7A4E;border-radius:0 8px 8px 0;padding:14px 16px;margin:16px 0">✅ Votre demande de crédit <strong th:text="${creditType}"></strong> a été <strong>approuvée</strong>.</div>
+<div th:if="${status == 'REJECTED'}" style="background:#FEF0EF;border-left:4px solid #C5372A;border-radius:0 8px 8px 0;padding:14px 16px;margin:16px 0">❌ Votre demande de crédit <strong th:text="${creditType}"></strong> n'a pas été retenue.<span th:if="${reason}"><br/>Motif : <span th:text="${reason}"></span></span></div>
+<div style="text-align:center"><a th:href="${dashboardUrl}" class="btn">Voir mes demandes</a></div>
+</div>
+<div class="footer">© 2024 Amen Bank</div>
+</div></div></body></html>

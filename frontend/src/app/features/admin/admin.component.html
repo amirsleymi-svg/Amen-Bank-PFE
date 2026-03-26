@@ -1,0 +1,270 @@
+<!-- admin.component.html -->
+<div class="admin-layout">
+
+  <!-- Admin sidebar -->
+  <aside class="admin-sidebar">
+    <div class="admin-sidebar-header">
+      <div class="admin-logo">
+        <svg width="32" height="32" viewBox="0 0 48 48" fill="none">
+          <rect width="48" height="48" rx="10" fill="rgba(255,255,255,0.15)"/>
+          <path d="M8 36V20L24 10L40 20V36H29V26H19V36H8Z" fill="white"/>
+        </svg>
+        <span>Admin Panel</span>
+      </div>
+    </div>
+
+    <nav class="admin-nav">
+      <button class="anav-item" [class.active]="activeView==='dashboard'" (click)="activeView='dashboard'">
+        <svg width="18" height="18" viewBox="0 0 24 24" fill="none"><rect x="3" y="3" width="7" height="7" rx="1" stroke="currentColor" stroke-width="1.75"/><rect x="14" y="3" width="7" height="7" rx="1" stroke="currentColor" stroke-width="1.75"/><rect x="3" y="14" width="7" height="7" rx="1" stroke="currentColor" stroke-width="1.75"/><rect x="14" y="14" width="7" height="7" rx="1" stroke="currentColor" stroke-width="1.75"/></svg>
+        Tableau de bord
+        <span class="anav-badge warning" *ngIf="stats?.pendingKycRequests">{{ stats?.pendingKycRequests }}</span>
+      </button>
+      <button class="anav-item" [class.active]="activeView==='kyc'" (click)="loadKyc()">
+        <svg width="18" height="18" viewBox="0 0 24 24" fill="none"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2" stroke="currentColor" stroke-width="1.75"/><circle cx="12" cy="7" r="4" stroke="currentColor" stroke-width="1.75"/></svg>
+        Vérifications KYC
+        <span class="anav-badge warning" *ngIf="stats?.pendingKycRequests">{{ stats?.pendingKycRequests }}</span>
+      </button>
+      <button class="anav-item" [class.active]="activeView==='users'" (click)="loadUsers()">
+        <svg width="18" height="18" viewBox="0 0 24 24" fill="none"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2" stroke="currentColor" stroke-width="1.75"/><circle cx="9" cy="7" r="4" stroke="currentColor" stroke-width="1.75"/><path d="M23 21v-2a4 4 0 0 0-3-3.87M16 3.13a4 4 0 0 1 0 7.75" stroke="currentColor" stroke-width="1.75" stroke-linecap="round"/></svg>
+        Utilisateurs
+      </button>
+      <button class="anav-item" [class.active]="activeView==='credits'" (click)="loadCredits()">
+        <svg width="18" height="18" viewBox="0 0 24 24" fill="none"><rect x="2" y="5" width="20" height="14" rx="2" stroke="currentColor" stroke-width="1.75"/><path d="M2 10h20" stroke="currentColor" stroke-width="1.75"/></svg>
+        Crédits
+        <span class="anav-badge warning" *ngIf="stats?.pendingCreditApplications">{{ stats?.pendingCreditApplications }}</span>
+      </button>
+      <button class="anav-item" [class.active]="activeView==='audit'" (click)="loadAuditLogs()">
+        <svg width="18" height="18" viewBox="0 0 24 24" fill="none"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z" stroke="currentColor" stroke-width="1.75"/><path d="M14 2v6h6M8 13h8M8 17h5" stroke="currentColor" stroke-width="1.75" stroke-linecap="round"/></svg>
+        Journaux d'audit
+      </button>
+    </nav>
+
+    <div class="admin-sidebar-footer">
+      <a routerLink="/dashboard" class="anav-item back-link">
+        <svg width="18" height="18" viewBox="0 0 24 24" fill="none"><path d="M19 12H5M12 19l-7-7 7-7" stroke="currentColor" stroke-width="1.75" stroke-linecap="round"/></svg>
+        Espace client
+      </a>
+    </div>
+  </aside>
+
+  <!-- Main content -->
+  <main class="admin-main">
+
+    <!-- ══ DASHBOARD ══ -->
+    <ng-container *ngIf="activeView==='dashboard'">
+      <div class="admin-page-header">
+        <h2>Tableau de bord</h2>
+        <span class="timestamp">Mis à jour : {{ now | date:'HH:mm' }}</span>
+      </div>
+
+      <div class="stats-grid">
+        <div class="stat-card">
+          <div class="sc-icon users"><svg width="20" height="20" viewBox="0 0 24 24" fill="none"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2" stroke="currentColor" stroke-width="1.75"/><circle cx="9" cy="7" r="4" stroke="currentColor" stroke-width="1.75"/></svg></div>
+          <div class="sc-data"><span class="sc-val">{{ stats?.totalUsers | number }}</span><span class="sc-lbl">Utilisateurs</span></div>
+        </div>
+        <div class="stat-card warning" (click)="loadKyc()">
+          <div class="sc-icon kyc"><svg width="20" height="20" viewBox="0 0 24 24" fill="none"><circle cx="12" cy="12" r="10" stroke="currentColor" stroke-width="1.75"/><path d="M12 8v4M12 16h.01" stroke="currentColor" stroke-width="1.75" stroke-linecap="round"/></svg></div>
+          <div class="sc-data"><span class="sc-val">{{ stats?.pendingKycRequests }}</span><span class="sc-lbl">KYC en attente</span></div>
+        </div>
+        <div class="stat-card warning" (click)="loadCredits()">
+          <div class="sc-icon credits"><svg width="20" height="20" viewBox="0 0 24 24" fill="none"><rect x="2" y="5" width="20" height="14" rx="2" stroke="currentColor" stroke-width="1.75"/><path d="M2 10h20" stroke="currentColor" stroke-width="1.75"/></svg></div>
+          <div class="sc-data"><span class="sc-val">{{ stats?.pendingCreditApplications }}</span><span class="sc-lbl">Crédits en attente</span></div>
+        </div>
+        <div class="stat-card">
+          <div class="sc-icon accounts"><svg width="20" height="20" viewBox="0 0 24 24" fill="none"><rect x="2" y="7" width="20" height="14" rx="2" stroke="currentColor" stroke-width="1.75"/><path d="M16 7V5a2 2 0 0 0-2-2h-4a2 2 0 0 0-2 2v2" stroke="currentColor" stroke-width="1.75"/></svg></div>
+          <div class="sc-data"><span class="sc-val">{{ stats?.totalAccounts | number }}</span><span class="sc-lbl">Comptes actifs</span></div>
+        </div>
+      </div>
+
+      <div class="quick-actions">
+        <button class="qa-btn" (click)="loadKyc()">Traiter les KYC →</button>
+        <button class="qa-btn" (click)="loadCredits()">Examiner les crédits →</button>
+        <button class="qa-btn" (click)="loadAuditLogs()">Voir les journaux →</button>
+      </div>
+    </ng-container>
+
+    <!-- ══ KYC ══ -->
+    <ng-container *ngIf="activeView==='kyc'">
+      <div class="admin-page-header">
+        <h2>Vérifications KYC</h2>
+        <div class="filter-row">
+          <select [(ngModel)]="kycFilter" (change)="loadKyc()" class="filter-select">
+            <option value="PENDING">En attente</option>
+            <option value="REVIEWING">En examen</option>
+            <option value="APPROVED">Approuvés</option>
+            <option value="REJECTED">Rejetés</option>
+          </select>
+        </div>
+      </div>
+
+      <div class="data-table-wrap">
+        <table class="data-table">
+          <thead><tr><th>Utilisateur</th><th>Email</th><th>Documents</th><th>Date</th><th>Statut</th><th>Actions</th></tr></thead>
+          <tbody>
+            <tr *ngFor="let kyc of kycList">
+              <td><strong>{{ kyc.userFullName }}</strong></td>
+              <td class="muted">{{ kyc.userEmail }}</td>
+              <td><span class="doc-badge">{{ kyc.documentCount }} doc(s)</span></td>
+              <td class="muted">{{ kyc.createdAt | date:'dd/MM/yyyy' }}</td>
+              <td><span class="status-pill" [class]="'st-'+kyc.status.toLowerCase()">{{ statusLabel(kyc.status) }}</span></td>
+              <td>
+                <div class="action-btns" *ngIf="kyc.status==='PENDING' || kyc.status==='REVIEWING'">
+                  <button class="btn-sm-success" (click)="approveKyc(kyc.id)" title="Approuver">
+                    <svg width="13" height="13" viewBox="0 0 24 24" fill="none"><path d="M20 6L9 17l-5-5" stroke="white" stroke-width="2.5" stroke-linecap="round"/></svg>
+                    Approuver
+                  </button>
+                  <button class="btn-sm-danger" (click)="openRejectModal('kyc', kyc.id)" title="Rejeter">
+                    <svg width="13" height="13" viewBox="0 0 24 24" fill="none"><path d="M18 6L6 18M6 6l12 12" stroke="white" stroke-width="2.5" stroke-linecap="round"/></svg>
+                    Rejeter
+                  </button>
+                </div>
+                <span class="done-label" *ngIf="kyc.status==='APPROVED' || kyc.status==='REJECTED'">Traité</span>
+              </td>
+            </tr>
+          </tbody>
+        </table>
+        <div class="empty-state" *ngIf="kycList.length===0 && !tableLoading">
+          <svg width="40" height="40" viewBox="0 0 24 24" fill="none"><circle cx="12" cy="12" r="10" stroke="var(--ab-muted)" stroke-width="1.5"/><path d="M9 12l2 2 4-4" stroke="var(--ab-muted)" stroke-width="1.5" stroke-linecap="round"/></svg>
+          <p>Aucune demande KYC</p>
+        </div>
+      </div>
+    </ng-container>
+
+    <!-- ══ USERS ══ -->
+    <ng-container *ngIf="activeView==='users'">
+      <div class="admin-page-header">
+        <h2>Utilisateurs</h2>
+        <div class="filter-row">
+          <input [(ngModel)]="userSearch" (keyup.enter)="loadUsers()" placeholder="Rechercher…" class="search-input"/>
+          <select [(ngModel)]="userStatusFilter" (change)="loadUsers()" class="filter-select">
+            <option value="ACTIVE">Actifs</option>
+            <option value="PENDING">En attente</option>
+            <option value="SUSPENDED">Suspendus</option>
+          </select>
+        </div>
+      </div>
+
+      <div class="data-table-wrap">
+        <table class="data-table">
+          <thead><tr><th>Utilisateur</th><th>Email</th><th>2FA</th><th>Dernière connexion</th><th>Statut</th><th>Actions</th></tr></thead>
+          <tbody>
+            <tr *ngFor="let u of userList">
+              <td>
+                <div class="user-cell">
+                  <div class="mini-avatar">{{ u.firstName?.charAt(0) }}{{ u.lastName?.charAt(0) }}</div>
+                  <div><strong>{{ u.firstName }} {{ u.lastName }}</strong><span class="muted-sm">@{{ u.username }}</span></div>
+                </div>
+              </td>
+              <td class="muted">{{ u.email }}</td>
+              <td><span class="tfa-badge" [class.enabled]="u.totpEnabled">{{ u.totpEnabled ? '✓ On' : '✗ Off' }}</span></td>
+              <td class="muted">{{ u.lastLoginAt | date:'dd/MM/yyyy HH:mm' }}</td>
+              <td><span class="status-pill" [class]="'st-'+u.status?.toLowerCase()">{{ userStatusLabel(u.status) }}</span></td>
+              <td>
+                <button class="btn-sm-outline" (click)="viewUser(u)">Détails</button>
+                <button class="btn-sm-danger" *ngIf="u.status==='ACTIVE'" (click)="suspendUser(u.id)">Suspendre</button>
+                <button class="btn-sm-success" *ngIf="u.status==='SUSPENDED'" (click)="activateUser(u.id)">Activer</button>
+              </td>
+            </tr>
+          </tbody>
+        </table>
+        <div class="pagination" *ngIf="userTotalPages > 1">
+          <button [disabled]="userPage===0" (click)="changeUserPage(userPage-1)">← Préc.</button>
+          <span>{{ userPage+1 }} / {{ userTotalPages }}</span>
+          <button [disabled]="userPage>=userTotalPages-1" (click)="changeUserPage(userPage+1)">Suiv. →</button>
+        </div>
+      </div>
+    </ng-container>
+
+    <!-- ══ CREDITS ══ -->
+    <ng-container *ngIf="activeView==='credits'">
+      <div class="admin-page-header">
+        <h2>Demandes de crédit</h2>
+        <select [(ngModel)]="creditFilter" (change)="loadCredits()" class="filter-select">
+          <option value="PENDING">En attente</option>
+          <option value="REVIEWING">En examen</option>
+          <option value="APPROVED">Approuvés</option>
+          <option value="REJECTED">Rejetés</option>
+          <option value="">Tous</option>
+        </select>
+      </div>
+
+      <div class="data-table-wrap">
+        <table class="data-table">
+          <thead><tr><th>Demandeur</th><th>Type</th><th>Montant</th><th>Durée</th><th>Mensualité</th><th>Date</th><th>Statut</th><th>Actions</th></tr></thead>
+          <tbody>
+            <tr *ngFor="let c of creditList">
+              <td><strong>{{ c.userFullName || 'Utilisateur' }}</strong></td>
+              <td><span class="ct-badge" [class]="'ct-'+c.creditType?.toLowerCase()">{{ creditTypeLabel(c.creditType) }}</span></td>
+              <td><strong>{{ c.amount | number:'1.0-0' }} TND</strong></td>
+              <td class="muted">{{ c.durationMonths }} mois</td>
+              <td class="muted">{{ c.monthlyPayment | number:'1.3-3' }} TND</td>
+              <td class="muted">{{ c.createdAt | date:'dd/MM/yyyy' }}</td>
+              <td><span class="status-pill" [class]="'st-'+c.status?.toLowerCase()">{{ creditStatusLabel(c.status) }}</span></td>
+              <td>
+                <div class="action-btns" *ngIf="c.status==='PENDING' || c.status==='REVIEWING'">
+                  <button class="btn-sm-success" (click)="approveCredit(c.id)">Approuver</button>
+                  <button class="btn-sm-danger"  (click)="openRejectModal('credit', c.id)">Rejeter</button>
+                </div>
+              </td>
+            </tr>
+          </tbody>
+        </table>
+        <div class="empty-state" *ngIf="creditList.length===0 && !tableLoading">
+          <svg width="40" height="40" viewBox="0 0 24 24" fill="none"><rect x="2" y="5" width="20" height="14" rx="2" stroke="var(--ab-muted)" stroke-width="1.5"/><path d="M2 10h20" stroke="var(--ab-muted)" stroke-width="1.5"/></svg>
+          <p>Aucune demande de crédit</p>
+        </div>
+      </div>
+    </ng-container>
+
+    <!-- ══ AUDIT LOGS ══ -->
+    <ng-container *ngIf="activeView==='audit'">
+      <div class="admin-page-header">
+        <h2>Journaux d'audit</h2>
+        <div class="filter-row">
+          <input [(ngModel)]="auditSearch" (keyup.enter)="loadAuditLogs()" placeholder="Filtrer par action…" class="search-input"/>
+          <button class="btn-filter" (click)="loadAuditLogs()">Appliquer</button>
+        </div>
+      </div>
+
+      <div class="data-table-wrap">
+        <table class="data-table audit-table">
+          <thead><tr><th>Date</th><th>Acteur</th><th>Action</th><th>Entité</th><th>IP</th><th>Statut</th></tr></thead>
+          <tbody>
+            <tr *ngFor="let log of auditList">
+              <td class="muted nowrap">{{ log.createdAt | date:'dd/MM HH:mm:ss' }}</td>
+              <td>
+                <div><strong class="actor-type">{{ log.actorType }}</strong></div>
+                <span class="muted-sm">{{ log.actorEmail }}</span>
+              </td>
+              <td><code class="action-code">{{ log.action }}</code></td>
+              <td class="muted">{{ log.entityType }}<span *ngIf="log.entityId"> #{{ log.entityId }}</span></td>
+              <td class="muted mono-sm">{{ log.ipAddress }}</td>
+              <td><span class="status-pill" [class]="log.status==='SUCCESS'?'st-approved':'st-rejected'">{{ log.status }}</span></td>
+            </tr>
+          </tbody>
+        </table>
+        <div class="pagination" *ngIf="auditTotalPages > 1">
+          <button [disabled]="auditPage===0" (click)="changeAuditPage(auditPage-1)">← Préc.</button>
+          <span>{{ auditPage+1 }} / {{ auditTotalPages }}</span>
+          <button [disabled]="auditPage>=auditTotalPages-1" (click)="changeAuditPage(auditPage+1)">Suiv. →</button>
+        </div>
+      </div>
+    </ng-container>
+
+  </main>
+
+</div>
+
+<!-- ── Rejection modal ──────────────────────────────────────────────── -->
+<div class="modal-backdrop" *ngIf="rejectModalOpen" (click)="closeRejectModal()">
+  <div class="modal-box reject-modal" (click)="$event.stopPropagation()">
+    <h3>Motif du rejet</h3>
+    <p>Veuillez indiquer la raison du rejet (optionnel)</p>
+    <textarea [(ngModel)]="rejectReason" rows="3" class="reject-textarea"
+              placeholder="Ex: Documents incomplets, informations incorrectes…"></textarea>
+    <div class="modal-footer-row">
+      <button class="btn-outline" (click)="closeRejectModal()">Annuler</button>
+      <button class="btn-danger" (click)="confirmReject()">Confirmer le rejet</button>
+    </div>
+  </div>
+</div>

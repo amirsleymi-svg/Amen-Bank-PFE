@@ -1,0 +1,241 @@
+openapi: "3.0.3"
+info:
+  title: Amen Bank API
+  version: "1.0.0"
+  description: Production-grade banking REST API — JWT + TOTP secured
+  contact:
+    email: dev@amenbank.com
+  license:
+    name: Proprietary
+
+servers:
+  - url: http://localhost:8080/api/v1
+    description: Local development
+  - url: https://api.amenbank.com/api/v1
+    description: Production
+
+security:
+  - bearerAuth: []
+
+components:
+  securitySchemes:
+    bearerAuth:
+      type: http
+      scheme: bearer
+      bearerFormat: JWT
+
+  schemas:
+    ApiResponse:
+      type: object
+      properties:
+        success: { type: boolean }
+        message: { type: string }
+        data: { type: object }
+        timestamp: { type: string, format: date-time }
+
+    AuthResponse:
+      type: object
+      properties:
+        accessToken:  { type: string }
+        refreshToken: { type: string }
+        expiresIn:    { type: integer }
+        tokenType:    { type: string, example: Bearer }
+        user:         { $ref: '#/components/schemas/UserResponse' }
+        totpRequired: { type: boolean }
+        tempToken:    { type: string }
+
+    UserResponse:
+      type: object
+      properties:
+        id:           { type: integer }
+        username:     { type: string }
+        email:        { type: string }
+        firstName:    { type: string }
+        lastName:     { type: string }
+        status:       { type: string, enum: [PENDING, ACTIVE, SUSPENDED] }
+        totpEnabled:  { type: boolean }
+
+    AccountResponse:
+      type: object
+      properties:
+        id:               { type: integer }
+        accountNumber:    { type: string }
+        iban:             { type: string }
+        accountType:      { type: string, enum: [CHECKING, SAVINGS, CREDIT, INVESTMENT] }
+        currency:         { type: string, example: TND }
+        balance:          { type: number, format: double }
+        availableBalance: { type: number, format: double }
+        status:           { type: string, enum: [ACTIVE, FROZEN, CLOSED] }
+
+    ErrorResponse:
+      type: object
+      properties:
+        status:  { type: integer }
+        error:   { type: string }
+        message: { type: string }
+        path:    { type: string }
+        timestamp: { type: string, format: date-time }
+
+paths:
+  /auth/register:
+    post:
+      tags: [Authentication]
+      summary: Register new user
+      security: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [username, email, password, firstName, lastName, idCardNumber]
+              properties:
+                username:     { type: string, minLength: 3 }
+                email:        { type: string, format: email }
+                password:     { type: string, minLength: 8 }
+                firstName:    { type: string }
+                lastName:     { type: string }
+                idCardNumber: { type: string }
+      responses:
+        '201': { description: Registration successful }
+        '400': { description: Validation error }
+        '409': { description: Email/username already taken }
+
+  /auth/login:
+    post:
+      tags: [Authentication]
+      summary: Authenticate user
+      security: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [identifier, password]
+              properties:
+                identifier: { type: string, description: Email or username }
+                password:   { type: string }
+      responses:
+        '200':
+          description: Login successful or 2FA required
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/AuthResponse'
+        '401': { description: Invalid credentials }
+        '423': { description: Account locked }
+
+  /auth/totp/verify:
+    post:
+      tags: [Authentication]
+      summary: Complete 2FA step
+      security: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [tempToken, totpCode]
+              properties:
+                tempToken: { type: string }
+                totpCode:  { type: string, pattern: '^[0-9]{6}$' }
+      responses:
+        '200': { description: Authentication complete }
+        '401': { description: Invalid TOTP code }
+
+  /accounts:
+    get:
+      tags: [Accounts]
+      summary: List user accounts
+      responses:
+        '200': { description: Accounts list }
+
+  /accounts/{id}/transactions:
+    get:
+      tags: [Accounts]
+      summary: Get paginated transactions
+      parameters:
+        - in: path
+          name: id
+          required: true
+          schema: { type: integer }
+        - in: query
+          name: page
+          schema: { type: integer, default: 0 }
+        - in: query
+          name: size
+          schema: { type: integer, default: 20 }
+        - in: query
+          name: from
+          schema: { type: string, format: date }
+        - in: query
+          name: to
+          schema: { type: string, format: date }
+      responses:
+        '200': { description: Transactions page }
+
+  /transfers:
+    post:
+      tags: [Transfers]
+      summary: Initiate wire transfer (requires TOTP)
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [fromAccountId, toIban, toName, amount, totpCode]
+              properties:
+                fromAccountId: { type: integer }
+                toIban:        { type: string }
+                toName:        { type: string }
+                amount:        { type: number, minimum: 0.001 }
+                label:         { type: string }
+                scheduledDate: { type: string, format: date }
+                totpCode:      { type: string, pattern: '^[0-9]{6}$' }
+      responses:
+        '201': { description: Transfer initiated }
+        '422': { description: Insufficient funds or account frozen }
+
+  /credits/simulate:
+    post:
+      tags: [Credits]
+      summary: Simulate credit with amortization
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [amount, durationMonths, creditType]
+              properties:
+                amount:         { type: number, minimum: 1000 }
+                durationMonths: { type: integer, minimum: 6, maximum: 300 }
+                creditType:     { type: string, enum: [PERSONAL, MORTGAGE, AUTO, BUSINESS, STUDENT] }
+      responses:
+        '200': { description: Simulation result with amortization table }
+
+  /admin/kyc:
+    get:
+      tags: [Admin]
+      summary: List KYC requests
+      parameters:
+        - in: query
+          name: status
+          schema: { type: string, enum: [PENDING, REVIEWING, APPROVED, REJECTED] }
+      responses:
+        '200': { description: KYC list }
+
+  /admin/kyc/{id}/approve:
+    patch:
+      tags: [Admin]
+      summary: Approve KYC request
+      parameters:
+        - in: path
+          name: id
+          required: true
+          schema: { type: integer }
+      responses:
+        '200': { description: KYC approved, user account activated }

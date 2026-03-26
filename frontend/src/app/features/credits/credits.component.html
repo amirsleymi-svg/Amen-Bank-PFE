@@ -1,0 +1,306 @@
+<!-- src/app/features/credits/credits.component.html -->
+<div class="page-container">
+
+  <div class="page-header">
+    <div>
+      <h2>Crédits</h2>
+      <p>Simulez et soumettez vos demandes de crédit</p>
+    </div>
+    <div class="header-tabs">
+      <button class="tab-btn" [class.active]="activeTab === 'simulate'" (click)="activeTab = 'simulate'">
+        <svg width="16" height="16" viewBox="0 0 24 24" fill="none">
+          <path d="M9 19v-6a2 2 0 0 0-2-2H5a2 2 0 0 0-2 2v6a2 2 0 0 0 2 2h2a2 2 0 0 0 2-2zm0 0V9a2 2 0 0 1 2-2h2a2 2 0 0 1 2 2v10m-6 0a2 2 0 0 0 2 2h2a2 2 0 0 0 2-2m0 0V5a2 2 0 0 1 2-2h2a2 2 0 0 1 2 2v14a2 2 0 0 1-2 2h-2a2 2 0 0 1-2-2z" stroke="currentColor" stroke-width="1.75"/>
+        </svg>
+        Simulation
+      </button>
+      <button class="tab-btn" [class.active]="activeTab === 'apply'" (click)="activeTab = 'apply'">
+        <svg width="16" height="16" viewBox="0 0 24 24" fill="none">
+          <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z" stroke="currentColor" stroke-width="1.75"/>
+          <path d="M14 2v6h6M12 18v-6M9 15h6" stroke="currentColor" stroke-width="1.75" stroke-linecap="round"/>
+        </svg>
+        Demande
+      </button>
+      <button class="tab-btn" [class.active]="activeTab === 'history'" (click)="activeTab = 'history'">
+        <svg width="16" height="16" viewBox="0 0 24 24" fill="none">
+          <circle cx="12" cy="12" r="10" stroke="currentColor" stroke-width="1.75"/>
+          <polyline points="12 6 12 12 16 14" stroke="currentColor" stroke-width="1.75" stroke-linecap="round"/>
+        </svg>
+        Mes demandes
+      </button>
+    </div>
+  </div>
+
+  <!-- ── TAB: Simulation ────────────────────────────────────────── -->
+  <div class="tab-content" *ngIf="activeTab === 'simulate'">
+    <div class="sim-layout">
+
+      <!-- Controls card -->
+      <div class="card sim-controls">
+        <h3>Paramètres du crédit</h3>
+
+        <!-- Credit type -->
+        <div class="credit-types">
+          <button *ngFor="let ct of creditTypes"
+                  class="credit-type-btn"
+                  [class.active]="simForm.value.creditType === ct.value"
+                  (click)="simForm.patchValue({ creditType: ct.value }); onSimulate()">
+            <span class="ct-icon">{{ ct.icon }}</span>
+            <span class="ct-label">{{ ct.label }}</span>
+            <span class="ct-rate">{{ ct.rate }}</span>
+          </button>
+        </div>
+
+        <form [formGroup]="simForm" (ngSubmit)="onSimulate()">
+
+          <!-- Amount slider -->
+          <div class="field-group">
+            <div class="label-row">
+              <label>Montant</label>
+              <span class="value-badge">{{ simForm.value.amount | number:'1.0-0' }} TND</span>
+            </div>
+            <input type="range" formControlName="amount"
+                   min="1000" max="500000" step="1000"
+                   class="range-input" (input)="onSimulate()"/>
+            <div class="range-labels">
+              <span>1 000</span><span>500 000 TND</span>
+            </div>
+          </div>
+
+          <!-- Duration slider -->
+          <div class="field-group">
+            <div class="label-row">
+              <label>Durée</label>
+              <span class="value-badge">{{ simForm.value.durationMonths }} mois ({{ simForm.value.durationMonths / 12 | number:'1.0-1' }} ans)</span>
+            </div>
+            <input type="range" formControlName="durationMonths"
+                   min="6" max="300" step="6"
+                   class="range-input" (input)="onSimulate()"/>
+            <div class="range-labels">
+              <span>6 mois</span><span>25 ans</span>
+            </div>
+          </div>
+
+          <button type="button" class="btn-secondary" (click)="applySimulation()">
+            Soumettre cette demande →
+          </button>
+        </form>
+      </div>
+
+      <!-- Results card -->
+      <div class="sim-results" *ngIf="simulation">
+        <div class="result-cards">
+          <div class="result-card primary">
+            <span class="rc-label">Mensualité</span>
+            <span class="rc-value">{{ simulation.monthlyPayment | number:'1.3-3' }}</span>
+            <span class="rc-currency">TND / mois</span>
+          </div>
+          <div class="result-card">
+            <span class="rc-label">Coût total</span>
+            <span class="rc-value">{{ simulation.totalRepayment | number:'1.3-3' }}</span>
+            <span class="rc-currency">TND</span>
+          </div>
+          <div class="result-card">
+            <span class="rc-label">Total intérêts</span>
+            <span class="rc-value">{{ simulation.totalInterest | number:'1.3-3' }}</span>
+            <span class="rc-currency">TND</span>
+          </div>
+          <div class="result-card">
+            <span class="rc-label">Taux annuel</span>
+            <span class="rc-value">{{ simulation.annualRate * 100 | number:'1.2-2' }}</span>
+            <span class="rc-currency">%</span>
+          </div>
+        </div>
+
+        <!-- Amortization chart -->
+        <div class="card amort-chart-card">
+          <div class="amort-header">
+            <h4>Tableau d'amortissement</h4>
+            <div class="amort-actions">
+              <button class="btn-outline-xs" (click)="exportAmortPdf()">PDF</button>
+              <button class="btn-outline-xs" (click)="exportAmortCsv()">CSV</button>
+              <button class="btn-outline-xs" (click)="showFullTable = !showFullTable">
+                {{ showFullTable ? 'Résumé' : 'Voir tout' }}
+              </button>
+            </div>
+          </div>
+          <div class="chart-container mini">
+            <canvas id="amortChart"></canvas>
+          </div>
+          <div class="amort-table-wrapper">
+            <table class="amort-table">
+              <thead>
+                <tr>
+                  <th>Mois</th><th>Mensualité</th>
+                  <th>Capital</th><th>Intérêts</th><th>Solde restant</th>
+                </tr>
+              </thead>
+              <tbody>
+                <tr *ngFor="let row of displayedAmortRows">
+                  <td>{{ row.month }}</td>
+                  <td>{{ row.payment | number:'1.3-3' }}</td>
+                  <td>{{ row.principal | number:'1.3-3' }}</td>
+                  <td class="interest-cell">{{ row.interest | number:'1.3-3' }}</td>
+                  <td>{{ row.remainingBalance | number:'1.3-3' }}</td>
+                </tr>
+              </tbody>
+            </table>
+          </div>
+        </div>
+      </div>
+
+      <!-- Loading skeleton -->
+      <div class="sim-results skeleton-results" *ngIf="simLoading">
+        <div class="result-cards">
+          <div class="result-card skeleton" *ngFor="let _ of [1,2,3,4]">
+            <div class="sk-line w-60"></div><div class="sk-line w-80 tall mt-2"></div>
+          </div>
+        </div>
+      </div>
+
+    </div>
+  </div>
+
+  <!-- ── TAB: Apply ─────────────────────────────────────────────── -->
+  <div class="tab-content" *ngIf="activeTab === 'apply'">
+    <div class="card apply-card">
+      <div class="card-header">
+        <div class="card-icon">
+          <svg width="20" height="20" viewBox="0 0 24 24" fill="none">
+            <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z" stroke="var(--ab-primary)" stroke-width="1.75"/>
+            <path d="M14 2v6h6M12 18v-6M9 15h6" stroke="var(--ab-primary)" stroke-width="1.75" stroke-linecap="round"/>
+          </svg>
+        </div>
+        <div>
+          <h3>Demande de crédit</h3>
+          <p>Complétez votre demande en quelques étapes</p>
+        </div>
+      </div>
+
+      <div class="success-result" *ngIf="applySuccess">
+        <div class="success-circle">
+          <svg width="36" height="36" viewBox="0 0 24 24" fill="none">
+            <path d="M20 6L9 17l-5-5" stroke="white" stroke-width="2.5" stroke-linecap="round"/>
+          </svg>
+        </div>
+        <h3>Demande soumise !</h3>
+        <p>Votre demande de crédit {{ appliedCredit?.creditType }} de <strong>{{ appliedCredit?.amount | number:'1.3-3' }} TND</strong> est en cours d'examen.</p>
+        <p class="tx-ref">Réf: #{{ appliedCredit?.id }}</p>
+        <button class="btn-primary" (click)="applySuccess = false">Nouvelle demande</button>
+      </div>
+
+      <div class="alert alert-error" *ngIf="applyError">{{ applyError }}</div>
+
+      <form [formGroup]="applyForm" (ngSubmit)="onApply()" *ngIf="!applySuccess" class="apply-form">
+
+        <div class="field-row">
+          <div class="field-group">
+            <label>Type de crédit *</label>
+            <div class="select-wrapper">
+              <select formControlName="creditType" class="form-select">
+                <option *ngFor="let ct of creditTypes" [value]="ct.value">
+                  {{ ct.label }} — {{ ct.rate }}
+                </option>
+              </select>
+            </div>
+          </div>
+          <div class="field-group">
+            <label>Montant souhaité (TND) *</label>
+            <div class="input-wrapper">
+              <input type="number" formControlName="amount" min="1000" max="500000"
+                     step="0.001" class="form-input" placeholder="50000"/>
+            </div>
+          </div>
+        </div>
+
+        <div class="field-row">
+          <div class="field-group">
+            <label>Durée (mois) *</label>
+            <div class="input-wrapper">
+              <input type="number" formControlName="durationMonths" min="6" max="300"
+                     step="6" class="form-input" placeholder="60"/>
+            </div>
+          </div>
+          <div class="field-group">
+            <label>Objet du crédit</label>
+            <div class="input-wrapper">
+              <input type="text" formControlName="purpose" class="form-input"
+                     placeholder="Achat immobilier, véhicule..."/>
+            </div>
+          </div>
+        </div>
+
+        <!-- Computed preview -->
+        <div class="apply-preview" *ngIf="applySimulation">
+          <div class="preview-row">
+            <span>Mensualité estimée</span>
+            <strong>{{ applySimulation.monthlyPayment | number:'1.3-3' }} TND</strong>
+          </div>
+          <div class="preview-row">
+            <span>Coût total</span>
+            <strong>{{ applySimulation.totalRepayment | number:'1.3-3' }} TND</strong>
+          </div>
+          <div class="preview-row">
+            <span>Taux annuel</span>
+            <strong>{{ applySimulation.annualRate * 100 | number:'1.2-2' }}%</strong>
+          </div>
+        </div>
+
+        <button type="submit" class="btn-primary" [disabled]="applyLoading || applyForm.invalid">
+          <span class="btn-spinner" *ngIf="applyLoading"></span>
+          Soumettre la demande
+        </button>
+      </form>
+    </div>
+  </div>
+
+  <!-- ── TAB: History ───────────────────────────────────────────── -->
+  <div class="tab-content" *ngIf="activeTab === 'history'">
+    <div class="applications-grid" *ngIf="applications.length > 0">
+      <div class="app-card" *ngFor="let app of applications">
+        <div class="app-card-header">
+          <div class="credit-type-badge" [class]="'ct-' + app.creditType.toLowerCase()">
+            {{ creditTypeLabel(app.creditType) }}
+          </div>
+          <span class="app-status" [class]="'status-' + app.status.toLowerCase()">
+            {{ statusLabel(app.status) }}
+          </span>
+        </div>
+        <div class="app-amount">
+          <span class="app-amount-value">{{ app.amount | number:'1.3-3' }}</span>
+          <span class="app-amount-currency">TND</span>
+        </div>
+        <div class="app-details">
+          <div class="app-detail">
+            <span>Durée</span><strong>{{ app.durationMonths }} mois</strong>
+          </div>
+          <div class="app-detail">
+            <span>Mensualité</span><strong>{{ app.monthlyPayment | number:'1.3-3' }} TND</strong>
+          </div>
+          <div class="app-detail">
+            <span>Taux</span><strong>{{ app.annualRate * 100 | number:'1.2-2' }}%</strong>
+          </div>
+          <div class="app-detail">
+            <span>Date</span><strong>{{ app.createdAt | date:'dd/MM/yyyy' }}</strong>
+          </div>
+        </div>
+        <div class="app-rejection" *ngIf="app.rejectionReason">
+          <svg width="14" height="14" viewBox="0 0 24 24" fill="none">
+            <circle cx="12" cy="12" r="10" stroke="currentColor" stroke-width="1.5"/>
+            <path d="M12 8v4M12 16h.01" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/>
+          </svg>
+          {{ app.rejectionReason }}
+        </div>
+      </div>
+    </div>
+
+    <div class="empty-state" *ngIf="applications.length === 0 && !appsLoading">
+      <svg width="48" height="48" viewBox="0 0 24 24" fill="none">
+        <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z" stroke="var(--ab-muted)" stroke-width="1.5"/>
+        <path d="M14 2v6h6" stroke="var(--ab-muted)" stroke-width="1.5"/>
+      </svg>
+      <p>Aucune demande de crédit</p>
+      <button class="btn-primary" (click)="activeTab = 'apply'">Faire une demande</button>
+    </div>
+  </div>
+
+</div>
