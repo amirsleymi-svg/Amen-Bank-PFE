@@ -8,15 +8,22 @@ import com.amenbank.service.impl.AdminService;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.security.SecurityRequirement;
 import io.swagger.v3.oas.annotations.tags.Tag;
+import jakarta.validation.constraints.Max;
+import jakarta.validation.constraints.Min;
+import jakarta.validation.constraints.NotBlank;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
+import org.springframework.security.core.annotation.AuthenticationPrincipal;
+import org.springframework.security.core.userdetails.UserDetails;
+import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.multipart.MultipartFile;
 
 @RestController
 @RequestMapping("/admin")
 @RequiredArgsConstructor
+@Validated
 @Tag(name = "Admin", description = "Administrative operations — requires ADMIN or SUPER_ADMIN role")
 @SecurityRequirement(name = "bearerAuth")
 public class AdminController {
@@ -36,8 +43,8 @@ public class AdminController {
     @Operation(summary = "List all users with pagination and search")
     @PreAuthorize("hasAuthority('USER_READ')")
     public ResponseEntity<ApiResponse<PageResponse<UserResponse>>> listUsers(
-            @RequestParam(defaultValue = "0") int page,
-            @RequestParam(defaultValue = "20") int size,
+            @RequestParam(defaultValue = "0") @Min(0) int page,
+            @RequestParam(defaultValue = "20") @Min(1) @Max(100) int size,
             @RequestParam(required = false) String search,
             @RequestParam(required = false) UserStatus status) {
         return ResponseEntity.ok(ApiResponse.ok("Users loaded",
@@ -67,8 +74,8 @@ public class AdminController {
     @Operation(summary = "List KYC requests")
     @PreAuthorize("hasAuthority('KYC_REVIEW')")
     public ResponseEntity<ApiResponse<PageResponse<KycRequestResponse>>> listKyc(
-            @RequestParam(defaultValue = "0") int page,
-            @RequestParam(defaultValue = "20") int size,
+            @RequestParam(defaultValue = "0") @Min(0) int page,
+            @RequestParam(defaultValue = "20") @Min(1) @Max(100) int size,
             @RequestParam(required = false) KycStatus status) {
         return ResponseEntity.ok(ApiResponse.ok("KYC requests loaded",
                 adminService.listKycRequests(page, size, status)));
@@ -86,8 +93,8 @@ public class AdminController {
     @PreAuthorize("hasAuthority('KYC_APPROVE')")
     public ResponseEntity<ApiResponse<Void>> approveKyc(
             @PathVariable Long id,
-            @RequestParam(required = false) String adminEmail) {
-        adminService.approveKyc(id, adminEmail);
+            @AuthenticationPrincipal UserDetails userDetails) {
+        adminService.approveKyc(id, userDetails != null ? userDetails.getUsername() : null);
         return ResponseEntity.ok(ApiResponse.ok("KYC approved"));
     }
 
@@ -96,7 +103,7 @@ public class AdminController {
     @PreAuthorize("hasAuthority('KYC_APPROVE')")
     public ResponseEntity<ApiResponse<Void>> rejectKyc(
             @PathVariable Long id,
-            @RequestParam String reason) {
+            @RequestParam @NotBlank String reason) {
         adminService.rejectKyc(id, reason);
         return ResponseEntity.ok(ApiResponse.ok("KYC rejected"));
     }
@@ -117,8 +124,8 @@ public class AdminController {
     @Operation(summary = "List all credit applications")
     @PreAuthorize("hasAuthority('CREDIT_REVIEW')")
     public ResponseEntity<ApiResponse<PageResponse<CreditApplicationResponse>>> listCredits(
-            @RequestParam(defaultValue = "0") int page,
-            @RequestParam(defaultValue = "20") int size,
+            @RequestParam(defaultValue = "0") @Min(0) int page,
+            @RequestParam(defaultValue = "20") @Min(1) @Max(100) int size,
             @RequestParam(required = false) CreditStatus status) {
         return ResponseEntity.ok(ApiResponse.ok("Credit applications loaded",
                 adminService.listCreditApplications(page, size, status)));
@@ -140,8 +147,8 @@ public class AdminController {
     @Operation(summary = "Get audit logs with filters")
     @PreAuthorize("hasAuthority('AUDIT_READ')")
     public ResponseEntity<ApiResponse<PageResponse<AuditLogResponse>>> getAuditLogs(
-            @RequestParam(defaultValue = "0") int page,
-            @RequestParam(defaultValue = "50") int size,
+            @RequestParam(defaultValue = "0") @Min(0) int page,
+            @RequestParam(defaultValue = "50") @Min(1) @Max(200) int size,
             @RequestParam(required = false) String action,
             @RequestParam(required = false) Long actorId) {
         return ResponseEntity.ok(ApiResponse.ok("Audit logs loaded",

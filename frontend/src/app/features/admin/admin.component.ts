@@ -4,17 +4,18 @@ import { FormsModule } from '@angular/forms';
 import { RouterModule } from '@angular/router';
 import { HttpClient, HttpParams } from '@angular/common/http';
 import { environment } from '../../../environments/environment';
+import { OnboardingRequestsComponent } from './components/onboarding-requests/onboarding-requests.component';
 
 @Component({
   selector: 'app-admin',
   standalone: true,
-  imports: [CommonModule, FormsModule, RouterModule, DatePipe, DecimalPipe],
+  imports: [CommonModule, FormsModule, RouterModule, DatePipe, DecimalPipe, OnboardingRequestsComponent],
   templateUrl: './admin.component.html',
   styleUrls: ['./admin.component.scss']
 })
 export class AdminComponent implements OnInit {
 
-  activeView: 'dashboard' | 'kyc' | 'users' | 'credits' | 'audit' = 'dashboard';
+  activeView: 'dashboard' | 'kyc' | 'users' | 'credits' | 'audit' | 'onboarding' = 'dashboard';
 
   stats: any       = null;
   kycList: any[]   = [];

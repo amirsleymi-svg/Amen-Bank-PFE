@@ -230,18 +230,18 @@
         </div>
 
         <!-- Computed preview -->
-        <div class="apply-preview" *ngIf="applySimulation">
+        <div class="apply-preview" *ngIf="applySimResult">
           <div class="preview-row">
             <span>Mensualité estimée</span>
-            <strong>{{ applySimulation.monthlyPayment | number:'1.3-3' }} TND</strong>
+            <strong>{{ applySimResult.monthlyPayment | number:'1.3-3' }} TND</strong>
           </div>
           <div class="preview-row">
             <span>Coût total</span>
-            <strong>{{ applySimulation.totalRepayment | number:'1.3-3' }} TND</strong>
+            <strong>{{ applySimResult.totalRepayment | number:'1.3-3' }} TND</strong>
           </div>
           <div class="preview-row">
             <span>Taux annuel</span>
-            <strong>{{ applySimulation.annualRate * 100 | number:'1.2-2' }}%</strong>
+            <strong>{{ applySimResult.annualRate * 100 | number:'1.2-2' }}%</strong>
           </div>
         </div>
 

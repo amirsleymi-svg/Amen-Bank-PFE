@@ -12,6 +12,10 @@ class Settings(BaseSettings):
     RATE_LIMIT: int = 20           # requests per minute
     SESSION_TTL: int = 1800        # seconds
     MAX_HISTORY: int = 20          # messages kept in session
+    OLLAMA_ENABLED: bool = True
+    OLLAMA_BASE_URL: str = "http://localhost:11434"
+    OLLAMA_MODEL: str = "llama3.2:3b"
+    OLLAMA_TIMEOUT_SECONDS: int = 20
 
     class Config:
         env_file = ".env"

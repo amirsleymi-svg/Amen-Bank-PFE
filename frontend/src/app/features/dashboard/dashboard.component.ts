@@ -4,6 +4,7 @@ import { RouterModule, Router } from '@angular/router';
 import { AuthService } from '../../core/services/auth.service';
 import { AccountService } from '../../core/services/account.service';
 import { Account, Transaction, User } from '../../core/models/models';
+import { ChatbotWidgetComponent } from '../chatbot/chatbot-widget.component';
 import { Subject, takeUntil } from 'rxjs';
 import { Chart, registerables } from 'chart.js';
 
@@ -12,7 +13,7 @@ Chart.register(...registerables);
 @Component({
   selector: 'app-dashboard',
   standalone: true,
-  imports: [CommonModule, RouterModule, DatePipe, DecimalPipe],
+  imports: [CommonModule, RouterModule, DatePipe, DecimalPipe, ChatbotWidgetComponent],
   templateUrl: './dashboard.component.html',
   styleUrls: ['./dashboard.component.scss']
 })
@@ -157,7 +158,7 @@ export class DashboardComponent implements OnInit, OnDestroy, AfterViewInit {
             padding: 12,
             cornerRadius: 8,
             callbacks: {
-              label: ctx => ` ${ctx.dataset.label}: ${ctx.parsed.y.toLocaleString('fr-TN')} TND`
+              label: (ctx: any) => ` ${ctx.dataset.label}: ${ctx.parsed.y.toLocaleString('fr-TN')} TND`
             }
           }
         },
@@ -172,7 +173,7 @@ export class DashboardComponent implements OnInit, OnDestroy, AfterViewInit {
             border: { display: false, dash: [4, 4] },
             ticks: {
               font: { size: 11 }, color: '#6B7A99',
-              callback: v => `${(+v).toLocaleString('fr')} TND`
+              callback: (v: any) => `${(+v).toLocaleString('fr')} TND`
             }
           }
         }

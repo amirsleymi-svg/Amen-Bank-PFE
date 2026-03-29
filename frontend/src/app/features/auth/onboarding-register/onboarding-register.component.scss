@@ -1,0 +1,107 @@
+// Onboarding Register — specific styles
+// Core auth styles come from auth.styles.scss
+
+.process-steps {
+  display: flex;
+  align-items: center;
+  gap: 0.25rem;
+  margin: 1.25rem 0 1.75rem;
+}
+
+.step {
+  display: flex;
+  align-items: center;
+  gap: 0.4rem;
+  opacity: 0.45;
+
+  &.active {
+    opacity: 1;
+
+    .step-num {
+      background: linear-gradient(135deg, var(--primary, #1a56db), var(--primary-dark, #1e3a8a));
+      color: white;
+    }
+
+    .step-label {
+      color: var(--primary, #1a56db);
+      font-weight: 600;
+    }
+  }
+}
+
+.step-num {
+  width: 28px;
+  height: 28px;
+  border-radius: 50%;
+  background: rgba(255,255,255,0.08);
+  border: 1.5px solid currentColor;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 0.75rem;
+  font-weight: 700;
+}
+
+.step-label {
+  font-size: 0.78rem;
+  white-space: nowrap;
+}
+
+.step-connector {
+  flex: 1;
+  height: 1px;
+  background: rgba(255,255,255,0.12);
+  min-width: 20px;
+}
+
+// ─── Success state ────────────────────────────────────────────────
+.success-state {
+  text-align: center;
+  padding: 2rem 0;
+
+  .success-icon-wrap {
+    font-size: 3.5rem;
+    margin-bottom: 1.25rem;
+    animation: bounceIn 0.5s ease;
+  }
+
+  h2 {
+    font-size: 1.5rem;
+    font-weight: 700;
+    color: var(--text-primary, #f1f5f9);
+    margin-bottom: 0.75rem;
+  }
+
+  p {
+    color: var(--text-secondary, #94a3b8);
+    line-height: 1.7;
+    margin-bottom: 1.25rem;
+
+    strong {
+      color: var(--primary, #60a5fa);
+    }
+  }
+}
+
+.success-info {
+  display: flex;
+  align-items: center;
+  gap: 0.6rem;
+  background: rgba(255,255,255,0.04);
+  border: 1px solid rgba(255,255,255,0.08);
+  border-radius: 10px;
+  padding: 0.75rem 1rem;
+  margin-bottom: 1.5rem;
+  font-size: 0.875rem;
+  color: var(--text-secondary, #94a3b8);
+
+  strong {
+    color: var(--text-primary, #f1f5f9);
+  }
+}
+
+@keyframes bounceIn {
+  0% { transform: scale(0.5); opacity: 0; }
+  70% { transform: scale(1.1); }
+  100% { transform: scale(1); opacity: 1; }
+}

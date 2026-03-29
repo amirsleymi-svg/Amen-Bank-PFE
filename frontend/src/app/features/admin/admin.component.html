@@ -33,6 +33,10 @@
         Crédits
         <span class="anav-badge warning" *ngIf="stats?.pendingCreditApplications">{{ stats?.pendingCreditApplications }}</span>
       </button>
+      <button class="anav-item" [class.active]="activeView==='onboarding'" (click)="activeView='onboarding'">
+        <svg width="18" height="18" viewBox="0 0 24 24" fill="none"><path d="M4 4h16c1.1 0 2 .9 2 2v12c0 1.1-.9 2-2 2H4c-1.1 0-2-.9-2-2V6c0-1.1.9-2 2-2z" stroke="currentColor" stroke-width="1.75"/><path d="M22 6l-10 7L2 6" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round"/></svg>
+        Inscriptions
+      </button>
       <button class="anav-item" [class.active]="activeView==='audit'" (click)="loadAuditLogs()">
         <svg width="18" height="18" viewBox="0 0 24 24" fill="none"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z" stroke="currentColor" stroke-width="1.75"/><path d="M14 2v6h6M8 13h8M8 17h5" stroke="currentColor" stroke-width="1.75" stroke-linecap="round"/></svg>
         Journaux d'audit
@@ -152,7 +156,7 @@
               <td>
                 <div class="user-cell">
                   <div class="mini-avatar">{{ u.firstName?.charAt(0) }}{{ u.lastName?.charAt(0) }}</div>
-                  <div><strong>{{ u.firstName }} {{ u.lastName }}</strong><span class="muted-sm">@{{ u.username }}</span></div>
+                  <div><strong>{{ u.firstName }} {{ u.lastName }}</strong><span class="muted-sm">&#64;{{ u.username }}</span></div>
                 </div>
               </td>
               <td class="muted">{{ u.email }}</td>
@@ -251,6 +255,10 @@
       </div>
     </ng-container>
 
+    <!-- Onboarding View -->
+    <ng-container *ngIf="activeView === 'onboarding'">
+      <app-onboarding-requests></app-onboarding-requests>
+    </ng-container>
   </main>
 
 </div>

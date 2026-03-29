@@ -132,6 +132,60 @@ public class EmailServiceImpl implements EmailService {
         sendHtml(adminEmail, "Nouvelle demande KYC — " + userName, "email/admin-new-kyc", ctx);
     }
 
+    // ─── Onboarding ───────────────────────────────────────────────
+    @Async
+    @Override
+    public void notifyAdminsNewCreditApplication(String userName, String userEmail, String creditType, BigDecimal amount) {
+        String adminEmail = "admin@amenbank.com";
+        String subject = "New credit application - " + userName;
+        String body = "A new credit application was submitted.\n"
+                + "User: " + userName + "\n"
+                + "Email: " + userEmail + "\n"
+                + "Type: " + creditType + "\n"
+                + "Amount: " + amount + " TND\n"
+                + "Review URL: " + frontendUrl + "/admin/credits";
+        sendGeneric(adminEmail, subject, body);
+    }
+
+    @Async
+    @Override
+    public void notifyAdminsNewRegistrationRequest(String applicantEmail) {
+        Context ctx = new Context(Locale.FRENCH);
+        ctx.setVariable("applicantEmail", applicantEmail);
+        ctx.setVariable("adminUrl", frontendUrl + "/admin");
+        String adminEmail = "admin@amenbank.com";
+        sendHtml(adminEmail, "Nouvelle demande d'inscription — " + applicantEmail, "email/admin-new-registration", ctx);
+    }
+
+    @Async
+    @Override
+    public void sendAccountActivation(String to, String name, String activationToken) {
+        Context ctx = new Context(Locale.FRENCH);
+        ctx.setVariable("name", name);
+        ctx.setVariable("activationUrl", frontendUrl + "/auth/activate?token=" + activationToken);
+        ctx.setVariable("appName", "Amen Bank");
+        sendHtml(to, "Activez votre compte Amen Bank", "email/account-activation", ctx);
+    }
+
+    @Async
+    @Override
+    public void sendRegistrationRejected(String to, String reason) {
+        Context ctx = new Context(Locale.FRENCH);
+        ctx.setVariable("reason", reason);
+        ctx.setVariable("appName", "Amen Bank");
+        sendHtml(to, "Mise à jour de votre demande d'inscription — Amen Bank", "email/registration-rejected", ctx);
+    }
+
+    @Async
+    @Override
+    public void sendAccountActivatedConfirmation(String to, String name) {
+        Context ctx = new Context(Locale.FRENCH);
+        ctx.setVariable("name", name);
+        ctx.setVariable("loginUrl", frontendUrl + "/auth/login");
+        ctx.setVariable("appName", "Amen Bank");
+        sendHtml(to, "Bienvenue chez Amen Bank — Compte activé !", "email/account-activated", ctx);
+    }
+
     // ─── Generic ──────────────────────────────────────────────────
     @Async
     @Override
@@ -161,7 +215,7 @@ public class EmailServiceImpl implements EmailService {
             helper.setText(html, true);
             mailSender.send(message);
             log.info("Email sent: [{}] → {}", subject, to);
-        } catch (MessagingException | java.io.UnsupportedEncodingException e) {
+        } catch (Exception e) {
             log.error("Failed to send email [{}] to {}: {}", subject, to, e.getMessage());
         }
     }

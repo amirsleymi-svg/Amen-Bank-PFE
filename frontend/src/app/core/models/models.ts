@@ -45,6 +45,7 @@ export interface User {
   totpEnabled: boolean;
   emailVerified: boolean;
   lastLoginAt?: string;
+  lastLoginIp?: string;
   createdAt?: string;
   roles?: string[];
 }

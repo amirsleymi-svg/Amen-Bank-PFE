@@ -117,6 +117,11 @@ public class AdminService {
     public void approveKyc(Long kycId, String adminEmail) {
         KycRequest kyc = kycRequestRepository.findById(kycId)
                 .orElseThrow(() -> new ResourceNotFoundException("KYC request", kycId));
+        String actor = (adminEmail != null && !adminEmail.isBlank()) ? adminEmail : "SYSTEM";
+
+        if (kyc.getStatus() != KycStatus.PENDING && kyc.getStatus() != KycStatus.REVIEWING) {
+            throw new BusinessException("KYC request has already been processed", "KYC_ALREADY_PROCESSED");
+        }
 
         kyc.setStatus(KycStatus.APPROVED);
         kyc.setReviewedAt(LocalDateTime.now());
@@ -129,7 +134,7 @@ public class AdminService {
         accountService.createAccount(user.getId(), AccountType.CHECKING);
 
         emailService.sendKycStatusUpdate(user.getEmail(), user.getFullName(), "APPROVED", null);
-        auditService.log("KYC_APPROVED", "KycRequest", kycId, adminEmail,
+        auditService.log("KYC_APPROVED", "KycRequest", kycId, actor,
                 "KYC approved for user: " + user.getEmail());
     }
 
@@ -137,6 +142,13 @@ public class AdminService {
     public void rejectKyc(Long kycId, String reason) {
         KycRequest kyc = kycRequestRepository.findById(kycId)
                 .orElseThrow(() -> new ResourceNotFoundException("KYC request", kycId));
+
+        if (kyc.getStatus() != KycStatus.PENDING && kyc.getStatus() != KycStatus.REVIEWING) {
+            throw new BusinessException("KYC request has already been processed", "KYC_ALREADY_PROCESSED");
+        }
+        if (reason == null || reason.isBlank()) {
+            throw new BusinessException("Rejection reason is required", "REJECTION_REASON_REQUIRED");
+        }
 
         kyc.setStatus(KycStatus.REJECTED);
         kyc.setRejectionReason(reason);
@@ -154,8 +166,21 @@ public class AdminService {
         KycRequest kyc = kycRequestRepository.findById(kycId)
                 .orElseThrow(() -> new ResourceNotFoundException("KYC request", kycId));
 
-        String ext = Objects.requireNonNull(file.getOriginalFilename())
-                .substring(file.getOriginalFilename().lastIndexOf('.'));
+        if (docType == null || docType.isBlank()) {
+            throw new BusinessException("Document type is required", "INVALID_DOCUMENT_TYPE");
+        }
+        if (file == null || file.isEmpty()) {
+            throw new BusinessException("Uploaded file is empty", "EMPTY_FILE");
+        }
+
+        String originalFilename = file.getOriginalFilename();
+        String ext = "";
+        if (originalFilename != null) {
+            int dotIndex = originalFilename.lastIndexOf('.');
+            if (dotIndex >= 0 && dotIndex < originalFilename.length() - 1) {
+                ext = originalFilename.substring(dotIndex);
+            }
+        }
         String fileName = UUID.randomUUID() + ext;
         Path target = Paths.get(uploadPath, "kyc", kycId.toString(), fileName);
 
@@ -170,7 +195,7 @@ public class AdminService {
                 .kycRequest(kyc)
                 .docType(docType)
                 .filePath(target.toString())
-                .fileName(file.getOriginalFilename())
+                .fileName(originalFilename != null ? originalFilename : fileName)
                 .mimeType(file.getContentType())
                 .fileSizeBytes(file.getSize())
                 .build();

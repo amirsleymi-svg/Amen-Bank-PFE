@@ -1,5 +1,6 @@
 package com.amenbank.entity;
 
+import com.amenbank.enums.UserStatus;
 import jakarta.persistence.*;
 import lombok.*;
 import org.hibernate.annotations.SQLDelete;

@@ -1,0 +1,169 @@
+<div class="admin-panel-content">
+  <!-- Header -->
+  <header class="admin-header">
+    <div class="header-main">
+      <h2 class="panel-title">Inscriptions Clients</h2>
+      <p class="panel-subtitle">Gérez les demandes d'ouverture de compte reçues par email.</p>
+    </div>
+    
+    <div class="header-filters">
+       <button 
+         [class.active]="statusFilter === 'PENDING'" 
+         (click)="onFilterChange('PENDING')" 
+         class="btn-tab">En Attente</button>
+       <button 
+         [class.active]="statusFilter === 'APPROVED'" 
+         (click)="onFilterChange('APPROVED')" 
+         class="btn-tab">Approuvées</button>
+       <button 
+         [class.active]="statusFilter === 'REJECTED'" 
+         (click)="onFilterChange('REJECTED')" 
+         class="btn-tab">Rejetées</button>
+       <button 
+         [class.active]="statusFilter === ''" 
+         (click)="onFilterChange('')" 
+         class="btn-tab">Toutes</button>
+    </div>
+  </header>
+
+  <!-- Requests Table -->
+  <div class="admin-table-container">
+    @if (isLoading) {
+      <div class="loading-spinner-wrap">Chargement...</div>
+    }
+    
+    @if (!isLoading && requests.length === 0) {
+      <div class="empty-state">Aucune demande trouvée pour ce filtre.</div>
+    }
+
+    @if (!isLoading && requests.length > 0) {
+      <table class="admin-table shadow-sm">
+        <thead>
+          <tr>
+            <th>Date</th>
+            <th>Email</th>
+            <th>Statut</th>
+            <th>IP Address</th>
+            <th>Reviewed By</th>
+            <th>Actions</th>
+          </tr>
+        </thead>
+        <tbody>
+          @for (req of requests; track req.id) {
+            <tr>
+              <td>{{ req.createdAt | date:'short' }}</td>
+              <td><strong>{{ req.email }}</strong></td>
+              <td>
+                <span class="status-badge" [class]="req.status.toLowerCase()">
+                   {{ req.status }}
+                </span>
+              </td>
+              <td>{{ req.ipAddress || 'Unknown' }}</td>
+              <td>{{ req.reviewedBy || '-' }}</td>
+              <td class="table-actions">
+                @if (req.status === 'PENDING') {
+                  <button (click)="openApproval(req)" class="btn-action approve" title="Approuver et Créer Compte">✓ Approuver</button>
+                  <button (click)="openRejection(req)" class="btn-action reject" title="Rejeter">✕ Rejeter</button>
+                } @else if (req.status === 'REJECTED') {
+                   <span class="rejection-reason" title="{{ req.rejectionReason }}">
+                     Note: {{ req.rejectionReason }}
+                   </span>
+                } @else {
+                  <span class="success-text">Terminé</span>
+                }
+              </td>
+            </tr>
+          }
+        </tbody>
+      </table>
+      
+      <!-- Pagination -->
+      <footer class="admin-pagination">
+         <span class="pages-info">Page {{ page + 1 }} sur {{ totalPages }} ({{ totalElements }} éléments)</span>
+         <div class="pagination-btns">
+            <button [disabled]="page === 0" (click)="onPageChange(page - 1)" class="btn-page">‹ Précédent</button>
+            <button [disabled]="page >= totalPages - 1" (click)="onPageChange(page + 1)" class="btn-page">Suivant ›</button>
+         </div>
+      </footer>
+    }
+  </div>
+
+  <!-- Approval Modal (Client Profile Setup) -->
+  @if (selectedRequest && !showRejectionModal) {
+    <div class="modal-overlay" (click)="closeApproval()">
+      <div class="modal-card" (click)="$event.stopPropagation()">
+        <header class="modal-header">
+           <h3>Approuver la demande : {{ selectedRequest.email }}</h3>
+           <button class="close-btn" (click)="closeApproval()">&times;</button>
+        </header>
+
+        <form [formGroup]="approvalForm" (ngSubmit)="approve()" class="modal-body">
+           <p class="form-info">Remplissez les informations de base pour créer le profil client. Le client recevra un mail pour définir son mot de passe.</p>
+           
+           <div class="form-row">
+             <div class="form-group col">
+               <label>Prénom</label>
+               <input type="text" formControlName="firstName" class="form-input" placeholder="Prénom">
+               @if (approvalForm.get('firstName')?.invalid && approvalForm.get('firstName')?.touched) {
+                 <span class="text-error">Prénom requis</span>
+               }
+             </div>
+             <div class="form-group col">
+               <label>Nom</label>
+               <input type="text" formControlName="lastName" class="form-input" placeholder="Nom de famille">
+               @if (approvalForm.get('lastName')?.invalid && approvalForm.get('lastName')?.touched) {
+                 <span class="text-error">Nom requis</span>
+               }
+             </div>
+           </div>
+
+           <div class="form-group">
+             <label>Téléphone</label>
+             <input type="text" formControlName="phoneNumber" class="form-input" placeholder="+216 12 345 678">
+           </div>
+
+           <div class="form-row">
+             <div class="form-group col">
+               <label>Date de Naissance</label>
+               <input type="date" formControlName="dateOfBirth" class="form-input">
+             </div>
+             <div class="form-group col">
+               <label>Adresse</label>
+               <input type="text" formControlName="address" class="form-input" placeholder="Adresse complète">
+             </div>
+           </div>
+
+           <footer class="modal-footer">
+              <button type="button" (click)="closeApproval()" class="btn-secondary">Annuler</button>
+              <button type="submit" [disabled]="isProcessing" class="btn-primary">
+                 {{ isProcessing ? 'Chargement...' : 'Créer le Compte et Envoyer Mail' }}
+              </button>
+           </footer>
+        </form>
+      </div>
+    </div>
+  }
+
+  <!-- Rejection Modal -->
+  @if (selectedRequest && showRejectionModal) {
+    <div class="modal-overlay" (click)="closeApproval()">
+      <div class="modal-card mini" (click)="$event.stopPropagation()">
+        <header class="modal-header">
+           <h3>Rejeter la demande : {{ selectedRequest.email }}</h3>
+           <button class="close-btn" (click)="closeApproval()">&times;</button>
+        </header>
+        <div class="modal-body">
+           <label>Raison du rejet (sera envoyée par mail au client)</label>
+           <textarea [(ngModel)]="rejectionReason" class="form-input" rows="4" placeholder="Ex: Adresse email suspecte, déjà client, etc."></textarea>
+           
+           <footer class="modal-footer">
+              <button type="button" (click)="closeApproval()" class="btn-secondary">Annuler</button>
+              <button [disabled]="isProcessing || !rejectionReason.trim()" (click)="reject()" class="btn-danger">
+                 {{ isProcessing ? 'Action en cours...' : 'Rejeter Définitivement' }}
+              </button>
+           </footer>
+        </div>
+      </div>
+    </div>
+  }
+</div>

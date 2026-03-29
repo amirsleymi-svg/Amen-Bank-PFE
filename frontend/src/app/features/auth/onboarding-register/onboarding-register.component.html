@@ -1,0 +1,152 @@
+<div class="auth-layout">
+  <!-- Left Panel -->
+  <aside class="auth-brand-panel">
+    <div class="brand-content">
+      <div class="brand-logo">
+        <span class="logo-icon">🏛️</span>
+        <span class="logo-text">Amen Bank</span>
+      </div>
+      <h1 class="brand-tagline">Ouvrez votre compte<br><span class="gradient-text">en 2 minutes</span></h1>
+      <p class="brand-sub">Soumettez simplement votre adresse email. Notre équipe examinera votre demande et vous enverra un lien pour finaliser votre inscription.</p>
+
+      <ul class="brand-features">
+        @for (b of benefits; track b.text) {
+          <li class="feature-item">
+            <span class="feature-icon">{{ b.icon }}</span>
+            <span>{{ b.text }}</span>
+          </li>
+        }
+      </ul>
+
+      <div class="brand-badge">
+        <span>🔐 Vos données sont protégées par le secret bancaire tunisien</span>
+      </div>
+    </div>
+  </aside>
+
+  <!-- Right Panel -->
+  <main class="auth-form-panel">
+    <div class="auth-form-container">
+
+      <!-- Success State -->
+      @if (submitted) {
+        <div class="success-state">
+          <div class="success-icon-wrap">✅</div>
+          <h2>Demande envoyée !</h2>
+          <p>
+            Votre demande d'ouverture de compte a bien été reçue.<br>
+            Notre équipe va l'examiner et vous contactera à l'adresse :<br>
+            <strong>{{ f['email'].value }}</strong>
+          </p>
+          <div class="success-info">
+            <span>⏱️</span>
+            <span>Délai de traitement habituel : <strong>24 à 48 heures ouvrables</strong></span>
+          </div>
+          <a routerLink="/auth/login" class="btn-primary" id="goto-login">
+            Retour à la connexion
+          </a>
+        </div>
+      }
+
+      <!-- Form State -->
+      @if (!submitted) {
+        <div class="form-header">
+          <a routerLink="/" class="back-link">← Accueil</a>
+          <div class="form-badge">Nouveau client</div>
+          <h2 class="form-title">Demande d'ouverture de compte</h2>
+          <p class="form-subtitle">
+            Aucun document requis à cette étape — seulement votre email.
+          </p>
+        </div>
+
+        <div class="process-steps">
+          <div class="step active">
+            <span class="step-num">1</span>
+            <span class="step-label">Votre email</span>
+          </div>
+          <div class="step-connector"></div>
+          <div class="step">
+            <span class="step-num">2</span>
+            <span class="step-label">Examen admin</span>
+          </div>
+          <div class="step-connector"></div>
+          <div class="step">
+            <span class="step-num">3</span>
+            <span class="step-label">Activation</span>
+          </div>
+        </div>
+
+        @if (errorMessage) {
+          <div class="error-alert" role="alert" id="error-message">{{ errorMessage }}</div>
+        }
+
+        <form [formGroup]="form" (ngSubmit)="submit()" novalidate>
+
+          <!-- Email -->
+          <div class="form-group" [class.has-error]="f['email'].invalid && f['email'].touched">
+            <label for="email-input">Adresse email</label>
+            <div class="input-wrapper">
+              <span class="input-icon">✉️</span>
+              <input
+                id="email-input"
+                type="email"
+                formControlName="email"
+                placeholder="votre@email.com"
+                autocomplete="email"
+                class="form-input"
+              />
+            </div>
+            @if (f['email'].touched && f['email'].errors?.['required']) {
+              <span class="field-error">L'adresse email est requise</span>
+            }
+            @if (f['email'].touched && f['email'].errors?.['email']) {
+              <span class="field-error">Format email invalide</span>
+            }
+          </div>
+
+          <!-- Confirm Email -->
+          <div class="form-group" [class.has-error]="(f['confirmEmail'].invalid && f['confirmEmail'].touched) || mismatch">
+            <label for="confirm-email-input">Confirmer l'adresse email</label>
+            <div class="input-wrapper">
+              <span class="input-icon">✉️</span>
+              <input
+                id="confirm-email-input"
+                type="email"
+                formControlName="confirmEmail"
+                placeholder="votre@email.com"
+                autocomplete="email"
+                class="form-input"
+              />
+            </div>
+            @if (f['confirmEmail'].touched && f['confirmEmail'].errors?.['required']) {
+              <span class="field-error">Veuillez confirmer votre email</span>
+            }
+            @if (mismatch) {
+              <span class="field-error">Les adresses email ne correspondent pas</span>
+            }
+          </div>
+
+          <!-- Submit -->
+          <button
+            id="submit-btn"
+            type="submit"
+            class="btn-primary btn-full"
+            [disabled]="isLoading">
+            @if (!isLoading) {
+              <span>📨 Soumettre ma demande</span>
+            } @else {
+              <span class="btn-spinner">Envoi en cours…</span>
+            }
+          </button>
+
+        </form>
+
+        <p class="form-footer-text">
+          Déjà client ?
+          <a routerLink="/auth/login" id="login-link">Connexion</a>
+        </p>
+      }
+
+    </div>
+  </main>
+</div>

@@ -47,16 +47,28 @@ public class SecurityConfig {
     // ─── Public endpoints (no auth required) ─────────────────────────
     private static final String[] PUBLIC_URLS = {
         "/auth/**",
+        "/api/v1/auth/**",
+        "/onboarding/register",   // client submits email request
+        "/api/v1/onboarding/register",
+        "/onboarding/activate",   // client activates account via token
+        "/api/v1/onboarding/activate",
         "/actuator/health",
+        "/api/v1/actuator/health",
         "/actuator/info",
+        "/api/v1/actuator/info",
         "/v3/api-docs/**",
+        "/api/v1/v3/api-docs/**",
         "/swagger-ui/**",
+        "/api/v1/swagger-ui/**",
         "/swagger-ui.html",
-        "/api-docs/**"
+        "/api/v1/swagger-ui.html",
+        "/api-docs/**",
+        "/api/v1/api-docs/**"
     };
 
     private static final String[] ADMIN_ONLY = {
-        "/admin/**"
+        "/admin/**",
+        "/api/v1/admin/**"
     };
 
     @Bean
@@ -80,9 +92,9 @@ public class SecurityConfig {
             .authorizeHttpRequests(auth -> auth
                 .requestMatchers(PUBLIC_URLS).permitAll()
                 .requestMatchers(HttpMethod.OPTIONS, "/**").permitAll()
-                .requestMatchers("/admin/register").permitAll()  // uses secret key
+                .requestMatchers("/admin/register", "/api/v1/admin/register").permitAll()  // uses secret key
                 .requestMatchers(ADMIN_ONLY).hasAnyAuthority("ROLE_SUPER_ADMIN", "ROLE_ADMIN", "ROLE_AUDITOR")
-                .requestMatchers("/actuator/**").hasAuthority("ROLE_SUPER_ADMIN")
+                .requestMatchers("/actuator/**", "/api/v1/actuator/**").hasAuthority("ROLE_SUPER_ADMIN")
                 .anyRequest().authenticated()
             )
 

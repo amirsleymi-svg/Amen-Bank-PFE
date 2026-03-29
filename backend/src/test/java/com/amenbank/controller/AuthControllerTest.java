@@ -44,7 +44,7 @@ class AuthControllerTest {
         req.setIdCardNumber("99887766");
         req.setDateOfBirth(LocalDate.of(1995, 1, 15));
 
-        mvc.perform(post("/api/v1/auth/register")
+        mvc.perform(post("/auth/register")
                 .contentType(MediaType.APPLICATION_JSON)
                 .content(mapper.writeValueAsString(req)))
                 .andExpect(status().isCreated())
@@ -64,7 +64,7 @@ class AuthControllerTest {
         req.setLastName("User2");
         req.setIdCardNumber("11223344");
 
-        mvc.perform(post("/api/v1/auth/register")
+        mvc.perform(post("/auth/register")
                 .contentType(MediaType.APPLICATION_JSON)
                 .content(mapper.writeValueAsString(req)))
                 .andExpect(status().isConflict());
@@ -82,7 +82,7 @@ class AuthControllerTest {
         req.setLastName("User");
         req.setIdCardNumber("55443322");
 
-        mvc.perform(post("/api/v1/auth/register")
+        mvc.perform(post("/auth/register")
                 .contentType(MediaType.APPLICATION_JSON)
                 .content(mapper.writeValueAsString(req)))
                 .andExpect(status().isBadRequest())
@@ -95,10 +95,10 @@ class AuthControllerTest {
     @DisplayName("POST /auth/login → 401 with wrong credentials")
     void login_wrongPassword_returns401() throws Exception {
         LoginRequest req = new LoginRequest();
-        req.setIdentifier("testuser@example.com");
+        req.setIdentifier("client@amenbank.com");
         req.setPassword("WrongPassword!");
 
-        mvc.perform(post("/api/v1/auth/login")
+        mvc.perform(post("/auth/login")
                 .contentType(MediaType.APPLICATION_JSON)
                 .content(mapper.writeValueAsString(req)))
                 .andExpect(status().isUnauthorized());
@@ -109,7 +109,7 @@ class AuthControllerTest {
     @Order(5)
     @DisplayName("GET /accounts → 401 without token")
     void accounts_noToken_returns401() throws Exception {
-        mvc.perform(get("/api/v1/accounts"))
+        mvc.perform(get("/accounts"))
                 .andExpect(status().isUnauthorized());
     }
 
@@ -117,7 +117,7 @@ class AuthControllerTest {
     @Order(6)
     @DisplayName("GET /auth/me → 401 without token")
     void me_noToken_returns401() throws Exception {
-        mvc.perform(get("/api/v1/auth/me"))
+        mvc.perform(get("/auth/me"))
                 .andExpect(status().isUnauthorized());
     }
 
@@ -126,7 +126,7 @@ class AuthControllerTest {
     @Order(7)
     @DisplayName("POST /auth/login → 400 with empty body")
     void login_emptyBody_returns400() throws Exception {
-        mvc.perform(post("/api/v1/auth/login")
+        mvc.perform(post("/auth/login")
                 .contentType(MediaType.APPLICATION_JSON)
                 .content("{}"))
                 .andExpect(status().isBadRequest())
@@ -137,7 +137,7 @@ class AuthControllerTest {
     @Order(8)
     @DisplayName("POST /auth/password/forgot → 200 always (anti-enumeration)")
     void forgotPassword_alwaysOk() throws Exception {
-        mvc.perform(post("/api/v1/auth/password/forgot")
+        mvc.perform(post("/auth/password/forgot")
                 .contentType(MediaType.APPLICATION_JSON)
                 .content("{\"email\":\"unknown@example.com\"}"))
                 .andExpect(status().isOk());

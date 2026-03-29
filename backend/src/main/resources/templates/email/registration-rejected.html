@@ -1,0 +1,28 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="UTF-8">
+    <title>Demande Amen Bank</title>
+</head>
+<body style="font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; background-color: #f4f7f6; margin: 0; padding: 0;">
+    <div style="max-width: 600px; margin: 30px auto; background-color: #ffffff; border-radius: 12px; overflow: hidden; box-shadow: 0 4px 6px rgba(0,0,0,0.1);">
+        <div style="position: relative; background-color: #fef2f2; padding: 40px 30px; text-align: center; color: #b91c1c; border-bottom: 2px solid #fee2e2;">
+            <h1 style="margin: 0; font-size: 28px; font-weight: 800;">Demande rejetée</h1>
+        </div>
+        <div style="padding: 40px; color: #333333; line-height: 1.8;">
+            <p style="font-size: 18px; margin-bottom: 20px;">Bonjour,</p>
+            <p>Nous avons bien reçu votre demande d'ouverture de compte chez <strong>Amen Bank</strong>.</p>
+            <p>Malheureusement, après examen attentif par nos administrateurs, nous ne sommes pas en mesure de donner suite à votre demande pour la raison suivante :</p>
+            
+            <div style="background-color: #fcfcfc; padding: 25px; border-radius: 20px; border: 1.5px dashed #f87171; margin: 30px 0; font-style: italic; color: #b91c1c;">
+                "<span th:text="${rejectionReason}"></span>"
+            </div>
+            
+            <p>Si vous souhaitez discuter de cette décision ou apporter des précisions, vous pouvez contacter notre service client à l'adresse support@amenbank.com.</p>
+        </div>
+        <div style="background-color: #1e293b; padding: 30px; text-align: center; font-size: 14px; color: #94a3b8;">
+            © 2024 Amen Bank. Tous droits réservés.
+        </div>
+    </div>
+</body>
+</html>

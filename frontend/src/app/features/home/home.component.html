@@ -1,0 +1,121 @@
+<div class="landing-page">
+  <!-- Navbar -->
+  <nav class="navbar">
+    <div class="container navbar-flex">
+      <div class="brand">
+        <span class="logo-icon">🏛️</span>
+        <span class="logo-text">Amen Bank</span>
+      </div>
+      <div class="nav-links">
+        <a href="#features">Services</a>
+        <a href="#about">À propos</a>
+        <a href="#stats">Chiffres</a>
+      </div>
+      <div class="nav-actions">
+        <a routerLink="/auth/login" class="btn-text">Se connecter</a>
+        <a routerLink="/auth/register" class="btn-primary-gradient">Ouvrir un compte</a>
+      </div>
+    </div>
+  </nav>
+
+  <!-- Hero Section -->
+  <section class="hero-section">
+    <div class="container hero-flex">
+      <div class="hero-content">
+        <div class="hero-badge">Digital-First Banking</div>
+        <h1 class="hero-title">Votre banque,<br><span class="gradient-text">réinventée.</span></h1>
+        <p class="hero-desc">
+          Une expérience bancaire sécurisée, moderne et 100% en ligne. Ouvrez votre compte en quelques secondes, gérez vos virements et simulez vos crédits en toute simplicité.
+        </p>
+        <div class="hero-btns">
+          <a routerLink="/auth/register" class="btn-primary-gradient lg">Ouvrir un compte (Gratuit)</a>
+          <a routerLink="/auth/login" class="btn-outline lg">Accès Client</a>
+        </div>
+      </div>
+      <div class="hero-visual">
+         <div class="glass-card main-card">
+            <div class="card-header">
+               <span>Balance Totale</span>
+               <span class="card-chip"></span>
+            </div>
+            <div class="card-balance">45,280.500 <span>TND</span></div>
+            <div class="card-footer">
+               <span class="card-number">•••• •••• •••• 1234</span>
+               <span class="card-holder">CLIENT PREMIUM</span>
+            </div>
+         </div>
+         <div class="glass-card sub-card stat-card">
+            <div class="stat-icon income">↑</div>
+            <div class="stat-info">
+               <span class="stat-label">Revenus</span>
+               <span class="stat-value">+2,400.00 DT</span>
+            </div>
+         </div>
+         <div class="glass-card sub-card transfer-card">
+            <div class="stat-icon transfer">⇆</div>
+            <div class="stat-info">
+               <span class="stat-label">Dernier virement</span>
+               <span class="stat-value">-500.00 DT</span>
+            </div>
+         </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- Stats Section -->
+  <section id="stats" class="stats-section">
+    <div class="container stats-grid">
+      @for (s of stats; track s.label) {
+        <div class="stat-item">
+          <div class="stat-number">{{ s.val }}</div>
+          <div class="stat-label">{{ s.label }}</div>
+        </div>
+      }
+    </div>
+  </section>
+
+  <!-- Features Grid -->
+  <section id="features" class="features-section">
+    <div class="container section-header">
+      <h2 class="section-title">Une banque pensée pour vous</h2>
+      <p class="section-desc">Découvrez une suite complète de services bancaires performants.</p>
+    </div>
+    <div class="container features-grid">
+      @for (f of features; track f.title) {
+        <div class="feature-card">
+          <div class="feature-icon">{{ f.icon }}</div>
+          <h3 class="feature-title">{{ f.title }}</h3>
+          <p class="feature-desc">{{ f.desc }}</p>
+        </div>
+      }
+    </div>
+  </section>
+
+  <!-- CTA Section -->
+  <section class="cta-section">
+    <div class="container cta-box gradient-bg">
+      <div class="cta-content">
+        <h2 class="cta-title">Prêt à rejoindre l'élite bancaire ?</h2>
+        <p class="cta-desc">Inscrivez-vous dès aujourd'hui et profitez d'un compte Gold gratuit pendant 1 an.</p>
+      </div>
+      <div class="cta-actions">
+        <a routerLink="/auth/register" class="btn-white">Demandez votre ouverture →</a>
+      </div>
+    </div>
+  </section>
+
+  <!-- Footer -->
+  <footer class="footer">
+    <div class="container footer-flex">
+      <div class="footer-brand">
+         <span class="logo-text">Amen Bank</span>
+         <p>© 2024 Tous droits réservés.</p>
+      </div>
+      <div class="footer-links">
+        <a href="#">Conditions</a>
+        <a href="#">Sécurité</a>
+        <a href="#">Contact</a>
+      </div>
+    </div>
+  </footer>
+</div>

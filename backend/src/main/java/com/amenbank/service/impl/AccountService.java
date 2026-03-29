@@ -21,6 +21,7 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.math.BigDecimal;
+import java.math.BigInteger;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.util.*;
@@ -60,6 +61,7 @@ public class AccountService {
             LocalDate from, LocalDate to,
             TransactionType type, TransactionStatus status,
             int page, int size) {
+        validateDateRange(from, to);
 
         // Verify ownership
         accountRepository.findActiveAccountByIdAndUserId(accountId, userId)
@@ -85,18 +87,18 @@ public class AccountService {
     @Transactional(readOnly = true)
     public byte[] exportTransactionsCsv(Long accountId, Long userId,
                                          LocalDate from, LocalDate to) {
+        validateDateRange(from, to);
+
         accountRepository.findActiveAccountByIdAndUserId(accountId, userId)
                 .orElseThrow(() -> new ResourceNotFoundException("Account", accountId));
 
-        Page<Transaction> all = transactionRepository.findFiltered(
-                accountId, from, to, null, null,
-                PageRequest.of(0, Integer.MAX_VALUE)
-        );
+        List<Transaction> all = transactionRepository.findFilteredForExport(
+                accountId, from, to, null, null);
 
         StringBuilder csv = new StringBuilder();
         csv.append("Date,Ref,Type,Category,Amount,Currency,Balance After,Label,Status,Counterpart\n");
 
-        for (Transaction tx : all.getContent()) {
+        for (Transaction tx : all) {
             csv.append(String.format("%s,%s,%s,%s,%s,%s,%s,%s,%s,%s\n",
                     tx.getValueDate(), tx.getTransactionRef(),
                     tx.getType(), tx.getCategory(),
@@ -210,12 +212,23 @@ public class AccountService {
     }
 
     private String generateIban(String accountNumber) {
-        return "TN59" + accountNumber.replaceAll("[^0-9]", "").substring(0, 20);
+        String digits = accountNumber.replaceAll("[^0-9]", "");
+        if (digits.isBlank()) {
+            throw new BusinessException("Failed to generate IBAN from account number", "IBAN_GENERATION_FAILED");
+        }
+        String bban = String.format("%020d", new BigInteger(digits));
+        return "TN59" + bban;
     }
 
     private String escCsv(String value) {
         if (value == null) return "";
         return "\"" + value.replace("\"", "\"\"") + "\"";
+    }
+
+    private void validateDateRange(LocalDate from, LocalDate to) {
+        if (from != null && to != null && from.isAfter(to)) {
+            throw new BusinessException("Invalid date range: from must be before or equal to to", "INVALID_DATE_RANGE");
+        }
     }
 
     public AccountResponse toAccountResponse(Account a) {

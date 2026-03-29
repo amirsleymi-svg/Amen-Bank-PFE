@@ -1,0 +1,28 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="UTF-8">
+    <title>Bienvenue chez Amen Bank !</title>
+</head>
+<body style="font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; background-color: #f4f7f6; margin: 0; padding: 0;">
+    <div style="max-width: 600px; margin: 30px auto; background-color: #ffffff; border-radius: 12px; overflow: hidden; box-shadow: 0 4px 6px rgba(0,0,0,0.1);">
+        <div style="position: relative; background-color: #10b981; padding: 40px 30px; text-align: center; color: #ffffff;">
+            <h1 style="margin: 0; font-size: 28px; font-weight: 800;">Bienvenue !</h1>
+        </div>
+        <div style="padding: 40px; color: #333333; line-height: 1.8;">
+            <p style="font-size: 18px; margin-bottom: 20px;">Bonjour <strong th:text="${firstName}"></strong>,</p>
+            <p>Votre compte <strong>Amen Bank</strong> a été activé avec succès. Vous faites désormais partie de nos clients privilégiés.</p>
+            <p>Vous pouvez maintenant accéder à l'ensemble de nos services : virements en ligne, consultation de solde, simulation de crédits, et bien plus encore.</p>
+            
+            <div style="text-align: center; margin: 40px 0;">
+                <a th:href="${loginUrl}" style="background-color: #10b981; color: #ffffff; padding: 18px 35px; text-decoration: none; border-radius: 10px; font-weight: 800; display: inline-block; font-size: 16px; box-shadow: 0 4px 15px rgba(16, 185, 129, 0.3);">ACCÉDER À MON ESPACE CLIENT</a>
+            </div>
+            
+            <p style="font-size: 14px; color: #6b7280; text-align: center;">Nous vous recommandons de ne jamais partager vos identifiants de connexion avec quiconque.</p>
+        </div>
+        <div style="background-color: #1e293b; padding: 30px; text-align: center; font-size: 14px; color: #94a3b8;">
+            © 2024 Amen Bank. Tous droits réservés.
+        </div>
+    </div>
+</body>
+</html>

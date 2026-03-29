@@ -10,9 +10,13 @@ import dev.samstevens.totp.secret.SecretGenerator;
 import dev.samstevens.totp.time.SystemTimeProvider;
 import dev.samstevens.totp.time.TimeProvider;
 import dev.samstevens.totp.util.Utils;
+import jakarta.annotation.PostConstruct;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
+
+import java.net.URLEncoder;
+import java.nio.charset.StandardCharsets;
 
 @Slf4j
 @Service
@@ -29,8 +33,22 @@ public class TotpService {
 
     private final SecretGenerator secretGenerator = new DefaultSecretGenerator(32);
     private final TimeProvider timeProvider = new SystemTimeProvider();
-    private final CodeGenerator codeGenerator = new DefaultCodeGenerator(HashingAlgorithm.SHA1, digits);
-    private final CodeVerifier codeVerifier = new DefaultCodeVerifier(codeGenerator, timeProvider);
+    private CodeGenerator codeGenerator;
+    private CodeVerifier codeVerifier;
+
+    @PostConstruct
+    void init() {
+        if (digits <= 0) {
+            log.warn("Invalid totp.digits value ({}), defaulting to 6", digits);
+            digits = 6;
+        }
+        if (period <= 0) {
+            log.warn("Invalid totp.period value ({}), defaulting to 30", period);
+            period = 30;
+        }
+        codeGenerator = new DefaultCodeGenerator(HashingAlgorithm.SHA1, digits);
+        codeVerifier = new DefaultCodeVerifier(codeGenerator, timeProvider);
+    }
 
     /**
      * Generate a new TOTP secret for a user.
@@ -79,9 +97,11 @@ public class TotpService {
      * Generate the otpauth:// URI (for manual entry in authenticator apps).
      */
     public String generateOtpAuthUri(String accountName, String secret) {
-        return "otpauth://totp/" + issuer + ":" + accountName
+        String encodedIssuer = URLEncoder.encode(issuer, StandardCharsets.UTF_8);
+        String encodedAccountName = URLEncoder.encode(accountName, StandardCharsets.UTF_8);
+        return "otpauth://totp/" + encodedIssuer + ":" + encodedAccountName
                 + "?secret=" + secret
-                + "&issuer=" + issuer
+                + "&issuer=" + encodedIssuer
                 + "&algorithm=SHA1"
                 + "&digits=" + digits
                 + "&period=" + period;

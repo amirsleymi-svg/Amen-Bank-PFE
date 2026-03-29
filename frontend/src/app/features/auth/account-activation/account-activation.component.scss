@@ -1,0 +1,80 @@
+/* Account Activation Component specific styles */
+
+.password-check-list {
+  display: flex;
+  flex-direction: column;
+  gap: 0.25rem;
+  margin-top: 0.5rem;
+}
+
+.check-item {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  font-size: 0.75rem;
+  color: var(--text-secondary, #94a3b8);
+  transition: all 0.3s ease;
+
+  &.met {
+    color: var(--success, #10b981);
+    transform: translateX(2px);
+  }
+}
+
+.check-icon {
+  width: 1rem;
+  font-weight: 700;
+}
+
+.alert-link {
+  color: var(--primary, #60a5fa);
+  text-decoration: underline;
+  display: block;
+}
+
+.success-state {
+  text-align: center;
+  padding: 2rem 0;
+
+  .success-icon-wrap {
+    font-size: 3.5rem;
+    margin-bottom: 1.25rem;
+    animation: bounceIn 0.5s ease;
+  }
+
+  h2 {
+    font-size: 1.5rem;
+    font-weight: 700;
+    margin-bottom: 0.75rem;
+    color: var(--text-primary, #f1f5f9);
+  }
+
+  p {
+    color: var(--text-secondary, #94a3b8);
+    line-height: 1.7;
+    margin-bottom: 1.25rem;
+
+    strong {
+      color: var(--primary, #60a5fa);
+    }
+  }
+}
+
+.success-info {
+  display: flex;
+  align-items: center;
+  gap: 0.6rem;
+  background: rgba(255, 255, 255, 0.04);
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  border-radius: 10px;
+  padding: 0.75rem 1rem;
+  margin-bottom: 1.5rem;
+  font-size: 0.875rem;
+  color: var(--text-secondary, #94a3b8);
+}
+
+@keyframes bounceIn {
+  0% { transform: scale(0.5); opacity: 0; }
+  70% { transform: scale(1.1); }
+  100% { transform: scale(1); opacity: 1; }
+}

@@ -24,6 +24,7 @@ import org.springframework.transaction.annotation.Transactional;
 
 import java.nio.charset.StandardCharsets;
 import java.security.MessageDigest;
+import java.security.NoSuchAlgorithmException;
 import java.time.LocalDateTime;
 import java.util.*;
 import java.util.concurrent.TimeUnit;
@@ -394,11 +395,7 @@ public class AuthService {
 
     private boolean verifyBackupCode(User user, String code) {
         if (code == null || code.length() != 8) return false;
-        String codeHash = passwordEncoder.encode(code);
-        Optional<BackupCode> backupCode = backupCodeRepository
-                .findByUserIdAndCodeHashAndUsedFalse(user.getId(), codeHash);
-
-        // BCrypt doesn't support findByHash; we need to iterate
+        // BCrypt hashes are salted, so each code must be matched with passwordEncoder.matches().
         List<BackupCode> activeCodes = backupCodeRepository.findByUserIdAndUsedFalse(user.getId());
         for (BackupCode bc : activeCodes) {
             if (passwordEncoder.matches(code, bc.getCodeHash())) {
@@ -438,8 +435,8 @@ public class AuthService {
                 hexString.append(String.format("%02x", b));
             }
             return hexString.toString();
-        } catch (Exception e) {
-            throw new RuntimeException("Failed to hash token", e);
+        } catch (NoSuchAlgorithmException e) {
+            throw new IllegalStateException("SHA-256 algorithm is not available", e);
         }
     }
 

@@ -5,6 +5,8 @@ import com.amenbank.dto.response.ApiResponse;
 import com.amenbank.dto.response.AuthResponse;
 import com.amenbank.dto.response.TotpSetupResponse;
 import com.amenbank.dto.response.UserResponse;
+import com.amenbank.entity.User;
+import com.amenbank.exception.UnauthorizedException;
 import com.amenbank.security.jwt.JwtUtils;
 import com.amenbank.service.impl.AuthService;
 import com.amenbank.service.impl.UserDetailsServiceImpl;
@@ -16,7 +18,6 @@ import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
-import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.web.bind.annotation.*;
@@ -86,11 +87,10 @@ public class AuthController {
     // ─── Logout ───────────────────────────────────────────────────────
     @PostMapping("/logout")
     @Operation(summary = "Logout and invalidate refresh token", security = @SecurityRequirement(name = "bearerAuth"))
-    @PreAuthorize("isAuthenticated()")
     public ResponseEntity<ApiResponse<Void>> logout(
             @Valid @RequestBody RefreshTokenRequest request,
             @AuthenticationPrincipal UserDetails userDetails) {
-        User user = userDetailsService.loadUserEntityByUsername(userDetails.getUsername());
+        User user = requireAuthenticatedUser(userDetails);
         authService.logout(request.getRefreshToken(), user.getId());
         return ResponseEntity.ok(ApiResponse.ok("Logged out successfully"));
     }
@@ -99,10 +99,9 @@ public class AuthController {
     @PostMapping("/totp/setup")
     @Operation(summary = "Generate TOTP secret and QR code for 2FA enrollment",
                security = @SecurityRequirement(name = "bearerAuth"))
-    @PreAuthorize("isAuthenticated()")
     public ResponseEntity<ApiResponse<TotpSetupResponse>> setupTotp(
             @AuthenticationPrincipal UserDetails userDetails) throws Exception {
-        User user = userDetailsService.loadUserEntityByUsername(userDetails.getUsername());
+        User user = requireAuthenticatedUser(userDetails);
         TotpSetupResponse response = authService.setupTotp(user.getId());
         return ResponseEntity.ok(ApiResponse.ok("TOTP setup initiated. Scan QR code with Google Authenticator.", response));
     }
@@ -111,11 +110,10 @@ public class AuthController {
     @PostMapping("/totp/enable")
     @Operation(summary = "Confirm and enable 2FA by verifying initial TOTP code",
                security = @SecurityRequirement(name = "bearerAuth"))
-    @PreAuthorize("isAuthenticated()")
     public ResponseEntity<ApiResponse<Void>> enableTotp(
             @RequestParam String totpCode,
             @AuthenticationPrincipal UserDetails userDetails) {
-        User user = userDetailsService.loadUserEntityByUsername(userDetails.getUsername());
+        User user = requireAuthenticatedUser(userDetails);
         authService.enableTotp(user.getId(), totpCode);
         return ResponseEntity.ok(ApiResponse.ok("Two-factor authentication has been enabled on your account."));
     }
@@ -151,10 +149,9 @@ public class AuthController {
     @GetMapping("/me")
     @Operation(summary = "Get current authenticated user profile",
                security = @SecurityRequirement(name = "bearerAuth"))
-    @PreAuthorize("isAuthenticated()")
     public ResponseEntity<ApiResponse<UserResponse>> getCurrentUser(
             @AuthenticationPrincipal UserDetails userDetails) {
-        User user = userDetailsService.loadUserEntityByUsername(userDetails.getUsername());
+        User user = requireAuthenticatedUser(userDetails);
         // Build response manually to avoid circular dependency
         UserResponse response = UserResponse.builder()
                 .id(user.getId())
@@ -179,8 +176,10 @@ public class AuthController {
         return xfHeader.split(",")[0].trim();
     }
 
-    // Inner import for User entity (to avoid redeclaring)
-    private com.amenbank.entity.User resolveUser(UserDetails userDetails) {
+    private User requireAuthenticatedUser(UserDetails userDetails) {
+        if (userDetails == null) {
+            throw new UnauthorizedException("Authentication required");
+        }
         return userDetailsService.loadUserEntityByUsername(userDetails.getUsername());
     }
 }

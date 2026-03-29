@@ -26,6 +26,7 @@ import java.io.InputStreamReader;
 import java.math.BigDecimal;
 import java.nio.charset.StandardCharsets;
 import java.time.LocalDate;
+import java.time.LocalDateTime;
 import java.util.*;
 import java.util.stream.Collectors;
 
@@ -42,6 +43,7 @@ public class TransferService {
     private final AccountService accountService;
     private final AuditService auditService;
     private final EmailService emailService;
+    private final TransactionRepository transactionRepository;
 
     // ─── Initiate single transfer ─────────────────────────────────────
     @Transactional
@@ -105,7 +107,7 @@ public class TransferService {
 
             transfer.setStatus(TransferStatus.COMPLETED);
             transfer.setDebitTxId(debitTx.getId());
-            transfer.setProcessedAt(java.time.LocalDateTime.now());
+            transfer.setProcessedAt(LocalDateTime.now());
             Transfer saved = transferRepository.save(transfer);
 
             // Send notification email
@@ -132,6 +134,10 @@ public class TransferService {
     @Transactional
     public Map<String, Object> processBatchCsv(MultipartFile file, Long userId,
                                                 Long fromAccountId, String totpCode) {
+        if (file == null || file.isEmpty()) {
+            throw new BusinessException("CSV file is required", "CSV_FILE_REQUIRED");
+        }
+
         User user = userRepository.findById(userId)
                 .orElseThrow(() -> new ResourceNotFoundException("User", userId));
 
@@ -140,6 +146,9 @@ public class TransferService {
                 .orElseThrow(() -> new ResourceNotFoundException("Account", fromAccountId));
 
         // Verify TOTP once for entire batch
+        if (!Boolean.TRUE.equals(user.getTotpEnabled())) {
+            throw new BusinessException("2FA must be enabled to perform transfers", "TOTP_REQUIRED");
+        }
         if (!totpService.verifyCode(user.getTotpSecret(), totpCode)) {
             throw new InvalidTotpException();
         }
@@ -242,9 +251,15 @@ public class TransferService {
 
     // ─── Validate limits ──────────────────────────────────────────────
     private void validateTransferLimits(Account account, BigDecimal amount) {
-        BigDecimal todayDebits = new BigDecimal("0"); // would fetch from repo
+        LocalDate today = LocalDate.now();
+        BigDecimal todayDebits = transactionRepository.sumTodayDebits(account.getId(), today);
         if (todayDebits.add(amount).compareTo(account.getDailyLimit()) > 0) {
             throw new BusinessException("Daily transfer limit exceeded", "DAILY_LIMIT_EXCEEDED");
+        }
+
+        BigDecimal monthDebits = transactionRepository.sumMonthDebits(account.getId(), today);
+        if (monthDebits.add(amount).compareTo(account.getMonthlyLimit()) > 0) {
+            throw new BusinessException("Monthly transfer limit exceeded", "MONTHLY_LIMIT_EXCEEDED");
         }
     }
 

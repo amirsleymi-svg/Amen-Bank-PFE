@@ -1,8 +1,9 @@
-from fastapi import APIRouter, Depends, HTTPException, Request
+from fastapi import APIRouter, Depends, HTTPException
 from fastapi.security import HTTPBearer, HTTPAuthorizationCredentials
 from typing import Optional
 from app.schemas.chat import ChatMessage, ChatResponse
 from app.services.chatbot import chatbot_service
+from app.config import settings
 import time
 
 router = APIRouter()
@@ -10,6 +11,7 @@ security = HTTPBearer(auto_error=False)
 
 # Simple in-memory rate limiter
 _rate_store: dict = {}
+
 
 def check_rate_limit(session_id: str, limit: int = 20):
     now = time.time()
@@ -26,7 +28,7 @@ async def chat(
     payload: ChatMessage,
     credentials: Optional[HTTPAuthorizationCredentials] = Depends(security),
 ):
-    check_rate_limit(payload.session_id)
+    check_rate_limit(payload.session_id, settings.RATE_LIMIT)
     token = credentials.credentials if credentials else None
     result = await chatbot_service.process(
         session_id=payload.session_id,
@@ -45,7 +47,5 @@ async def get_session(session_id: str):
 
 @router.delete("/session/{session_id}")
 async def clear_session(session_id: str):
-    from app.database import get_redis
-    redis = get_redis()
-    await redis.delete(f"chat:session:{session_id}")
+    await chatbot_service.clear_session(session_id)
     return {"message": "Session cleared"}

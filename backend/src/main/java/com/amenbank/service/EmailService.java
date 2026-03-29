@@ -9,5 +9,19 @@ public interface EmailService {
     void sendCreditStatusUpdate(String to, String name, String creditType, String status, String reason);
     void sendKycStatusUpdate(String to, String name, String status, String reason);
     void notifyAdminsNewKycRequest(String userName, String userEmail);
+    void notifyAdminsNewCreditApplication(String userName, String userEmail, String creditType, java.math.BigDecimal amount);
     void sendGeneric(String to, String subject, String body);
+
+    // ─── Onboarding ───────────────────────────────────────────────────
+    /** Notify admins a new registration request has arrived */
+    void notifyAdminsNewRegistrationRequest(String applicantEmail);
+
+    /** Send activation link email to new client */
+    void sendAccountActivation(String to, String name, String activationToken);
+
+    /** Notify client their registration was rejected */
+    void sendRegistrationRejected(String to, String reason);
+
+    /** Confirm account activation success */
+    void sendAccountActivatedConfirmation(String to, String name);
 }

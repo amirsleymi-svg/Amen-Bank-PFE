@@ -11,6 +11,7 @@ import org.springframework.data.repository.query.Param;
 import org.springframework.stereotype.Repository;
 import java.math.BigDecimal;
 import java.time.LocalDate;
+import java.util.List;
 import java.util.Optional;
 
 @Repository
@@ -30,6 +31,19 @@ public interface TransactionRepository extends JpaRepository<Transaction, Long> 
         @Param("type") TransactionType type,
         @Param("status") TransactionStatus status,
         Pageable pageable);
+
+    @Query("SELECT t FROM Transaction t WHERE t.account.id = :accountId " +
+           "AND (:from IS NULL OR t.valueDate >= :from) " +
+           "AND (:to IS NULL OR t.valueDate <= :to) " +
+           "AND (:type IS NULL OR t.type = :type) " +
+           "AND (:status IS NULL OR t.status = :status) " +
+           "ORDER BY t.createdAt DESC")
+    List<Transaction> findFilteredForExport(
+        @Param("accountId") Long accountId,
+        @Param("from") LocalDate from,
+        @Param("to") LocalDate to,
+        @Param("type") TransactionType type,
+        @Param("status") TransactionStatus status);
 
     Optional<Transaction> findByTransactionRef(String ref);
 

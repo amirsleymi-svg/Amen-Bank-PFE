@@ -73,6 +73,9 @@ public class Account {
     @Column(name = "updated_at", nullable = false)
     private LocalDateTime updatedAt;
 
+    @Version
+    private Integer version;
+
     @OneToMany(mappedBy = "account", cascade = CascadeType.ALL, fetch = FetchType.LAZY)
     @Builder.Default
     private List<Transaction> transactions = new ArrayList<>();

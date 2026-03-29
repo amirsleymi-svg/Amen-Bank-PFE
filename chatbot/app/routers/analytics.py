@@ -1,11 +1,15 @@
 from fastapi import APIRouter
 from app.database import get_redis
+from app.services.chatbot import chatbot_service
 
 router = APIRouter()
 
 @router.get("")
 async def get_analytics():
     redis = get_redis()
+    if redis is None:
+        return chatbot_service.get_memory_analytics()
+
     total = await redis.get("analytics:total_messages") or 0
 
     # Top intents

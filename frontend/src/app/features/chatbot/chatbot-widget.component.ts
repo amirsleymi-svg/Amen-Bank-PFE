@@ -2,8 +2,8 @@ import { Component, OnInit, ViewChild, ElementRef, AfterViewChecked } from '@ang
 import { CommonModule, DatePipe } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { HttpClient } from '@angular/common/http';
-import { AuthService } from '../../../core/services/auth.service';
-import { environment } from '../../../../environments/environment';
+import { AuthService } from '../../core/services/auth.service';
+import { environment } from '../../../environments/environment';
 import { v4 as uuidv4 } from 'uuid';
 
 interface ChatMsg {

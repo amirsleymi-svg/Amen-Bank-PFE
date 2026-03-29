@@ -1,0 +1,4 @@
+#NOTE: This is a Maven Resolver internal implementation file, its format can be changed without prior notice.
+#Fri Mar 27 05:28:05 GMT+01:00 2026
+@default-central-https\://repo.maven.apache.org/maven2/.lastUpdated=1774585685698
+https\://repo.maven.apache.org/maven2/.error=Could not transfer artifact org.apache.maven.plugins\:maven-checkstyle-plugin\:pom\:3.3.1 from/to central (https\://repo.maven.apache.org/maven2)\: Permission denied\: getsockopt

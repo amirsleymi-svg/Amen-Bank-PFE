@@ -24,7 +24,7 @@ export class CreditsComponent implements OnInit, AfterViewInit, OnDestroy {
   applyForm!: FormGroup;
 
   simulation:      CreditSimulationResponse | null = null;
-  applySimulation: CreditSimulationResponse | null = null;
+  applySimResult:  CreditSimulationResponse | null = null;
   applications:    CreditApplication[] = [];
 
   simLoading   = false;
@@ -110,7 +110,7 @@ export class CreditsComponent implements OnInit, AfterViewInit, OnDestroy {
       amount:         this.applyForm.value.amount,
       durationMonths: this.applyForm.value.durationMonths,
       creditType:     this.applyForm.value.creditType
-    }).subscribe({ next: res => this.applySimulation = res.data });
+    }).subscribe({ next: res => this.applySimResult = res.data });
   }
 
   applySimulation2(): void {
@@ -120,7 +120,7 @@ export class CreditsComponent implements OnInit, AfterViewInit, OnDestroy {
         amount:         this.simForm.value.amount,
         durationMonths: this.simForm.value.durationMonths
       });
-      this.applySimulation = this.simulation;
+      this.applySimResult = this.simulation;
       this.activeTab = 'apply';
     }
   }

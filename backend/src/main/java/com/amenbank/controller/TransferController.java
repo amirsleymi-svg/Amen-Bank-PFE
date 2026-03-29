@@ -8,18 +8,25 @@ import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.security.SecurityRequirement;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import jakarta.validation.Valid;
+import jakarta.validation.constraints.Max;
+import jakarta.validation.constraints.Min;
+import jakarta.validation.constraints.NotBlank;
+import jakarta.validation.constraints.NotNull;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.*;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.security.core.userdetails.UserDetails;
+import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.multipart.MultipartFile;
+import java.nio.charset.StandardCharsets;
 import java.util.Map;
 
 @RestController
 @RequestMapping("/transfers")
 @RequiredArgsConstructor
+@Validated
 @Tag(name = "Transfers", description = "Wire transfers, batch CSV, standing orders")
 @SecurityRequirement(name = "bearerAuth")
 public class TransferController {
@@ -42,8 +49,8 @@ public class TransferController {
     @Operation(summary = "Get all transfers for current user")
     @PreAuthorize("hasAuthority('TRANSFER_CREATE')")
     public ResponseEntity<ApiResponse<PageResponse<TransferResponse>>> getTransfers(
-            @RequestParam(defaultValue = "0") int page,
-            @RequestParam(defaultValue = "20") int size,
+            @RequestParam(defaultValue = "0") @Min(0) int page,
+            @RequestParam(defaultValue = "20") @Min(1) @Max(100) int size,
             @AuthenticationPrincipal UserDetails userDetails) {
         var user = userDetailsService.loadUserEntityByUsername(userDetails.getUsername());
         return ResponseEntity.ok(ApiResponse.ok("Transfers loaded",
@@ -66,8 +73,8 @@ public class TransferController {
     @PreAuthorize("hasAuthority('TRANSFER_CREATE')")
     public ResponseEntity<ApiResponse<Map<String, Object>>> uploadBatch(
             @RequestParam("file") MultipartFile file,
-            @RequestParam Long fromAccountId,
-            @RequestParam String totpCode,
+            @RequestParam @NotNull Long fromAccountId,
+            @RequestParam @NotBlank String totpCode,
             @AuthenticationPrincipal UserDetails userDetails) {
         var user = userDetailsService.loadUserEntityByUsername(userDetails.getUsername());
         Map<String, Object> result = transferService.processBatchCsv(file, user.getId(), fromAccountId, totpCode);
@@ -81,6 +88,6 @@ public class TransferController {
         return ResponseEntity.ok()
                 .header(HttpHeaders.CONTENT_DISPOSITION, "attachment; filename=\"transfer-template.csv\"")
                 .contentType(MediaType.parseMediaType("text/csv"))
-                .body(csv.getBytes());
+                .body(csv.getBytes(StandardCharsets.UTF_8));
     }
 }

@@ -33,7 +33,9 @@ public class AuditServiceImpl implements AuditService {
                 ipAddress = attrs.getRequest().getRemoteAddr();
                 userAgent = attrs.getRequest().getHeader("User-Agent");
             }
-        } catch (Exception ignored) {}
+        } catch (Exception e) {
+            log.debug("Could not capture request metadata for audit log: {}", e.getMessage());
+        }
 
         AuditLog audit = AuditLog.builder()
                 .actorType(AuditActorType.USER)

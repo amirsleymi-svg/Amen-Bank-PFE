@@ -1,0 +1,4 @@
+#NOTE: This is a Maven Resolver internal implementation file, its format can be changed without prior notice.
+#Fri Mar 27 05:28:06 GMT+01:00 2026
+@default-central-https\://repo.maven.apache.org/maven2/.lastUpdated=1774585686511
+https\://repo.maven.apache.org/maven2/.error=Could not transfer artifact org.apache.maven.plugins\:maven-javadoc-plugin\:pom\:3.6.3 from/to central (https\://repo.maven.apache.org/maven2)\: Permission denied\: getsockopt

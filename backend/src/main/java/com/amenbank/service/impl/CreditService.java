@@ -105,25 +105,19 @@ public class CreditService {
         User user = userRepository.findById(userId)
                 .orElseThrow(() -> new ResourceNotFoundException("User", userId));
 
-        // Check no active pending application of same type
-        boolean hasPending = creditApplicationRepository
-                .findByUserIdOrderByCreatedAtDesc(userId, PageRequest.of(0, 1))
-                .getContent().stream()
-                .anyMatch(c -> c.getStatus() == CreditStatus.PENDING && c.getCreditType() == request.getCreditType());
-
-        if (hasPending) {
+        if (creditApplicationRepository.existsByUserIdAndCreditTypeAndStatus(
+                userId, request.getCreditType(), CreditStatus.PENDING)) {
             throw new BusinessException(
                     "You already have a pending " + request.getCreditType() + " credit application",
                     "DUPLICATE_APPLICATION");
         }
 
         BigDecimal annualRate = getAnnualRate(request.getCreditType());
-        // Simulate to get computed values
-        CreditSimulationResponse sim = simulate(new CreditSimulationRequest() {{
-            setAmount(request.getAmount());
-            setDurationMonths(request.getDurationMonths());
-            setCreditType(request.getCreditType());
-        }});
+        CreditSimulationRequest simulationRequest = new CreditSimulationRequest();
+        simulationRequest.setAmount(request.getAmount());
+        simulationRequest.setDurationMonths(request.getDurationMonths());
+        simulationRequest.setCreditType(request.getCreditType());
+        CreditSimulationResponse sim = simulate(simulationRequest);
 
         CreditApplication application = CreditApplication.builder()
                 .user(user)
@@ -140,7 +134,11 @@ public class CreditService {
         CreditApplication saved = creditApplicationRepository.save(application);
 
         // Notify admins
-        emailService.notifyAdminsNewKycRequest(user.getFullName(), user.getEmail());
+        emailService.notifyAdminsNewCreditApplication(
+                user.getFullName(),
+                user.getEmail(),
+                request.getCreditType().name(),
+                request.getAmount());
         auditService.log("CREDIT_APPLIED", "CreditApplication", saved.getId(),
                 user.getEmail(), "Credit application: " + request.getCreditType() + " " + request.getAmount() + " TND");
 
@@ -174,8 +172,12 @@ public class CreditService {
             throw new BusinessException("Application already processed", "ALREADY_PROCESSED");
         }
 
+        if (newStatus == CreditStatus.REJECTED && (reason == null || reason.isBlank())) {
+            throw new BusinessException("Rejection reason is required when rejecting a credit application", "REJECTION_REASON_REQUIRED");
+        }
+
         app.setStatus(newStatus);
-        app.setRejectionReason(reason);
+        app.setRejectionReason(newStatus == CreditStatus.REJECTED ? reason : null);
         app.setReviewedAt(java.time.LocalDateTime.now());
 
         if (newStatus == CreditStatus.DISBURSED) {

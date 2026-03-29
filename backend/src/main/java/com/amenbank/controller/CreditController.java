@@ -9,16 +9,20 @@ import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.security.SecurityRequirement;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import jakarta.validation.Valid;
+import jakarta.validation.constraints.Max;
+import jakarta.validation.constraints.Min;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.*;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.security.core.userdetails.UserDetails;
+import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.annotation.*;
 
 @RestController
 @RequestMapping("/credits")
 @RequiredArgsConstructor
+@Validated
 @Tag(name = "Credits", description = "Credit simulation and applications")
 @SecurityRequirement(name = "bearerAuth")
 public class CreditController {
@@ -49,8 +53,8 @@ public class CreditController {
     @Operation(summary = "Get all credit applications for current user")
     @PreAuthorize("hasAuthority('CREDIT_APPLY')")
     public ResponseEntity<ApiResponse<PageResponse<CreditApplicationResponse>>> getApplications(
-            @RequestParam(defaultValue = "0") int page,
-            @RequestParam(defaultValue = "10") int size,
+            @RequestParam(defaultValue = "0") @Min(0) int page,
+            @RequestParam(defaultValue = "10") @Min(1) @Max(100) int size,
             @AuthenticationPrincipal UserDetails userDetails) {
         var user = userDetailsService.loadUserEntityByUsername(userDetails.getUsername());
         return ResponseEntity.ok(ApiResponse.ok("Applications loaded",

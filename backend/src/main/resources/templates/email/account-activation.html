@@ -1,0 +1,30 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="UTF-8">
+    <title>Activez votre compte Amen Bank</title>
+</head>
+<body style="font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; background-color: #f4f7f6; margin: 0; padding: 0;">
+    <div style="max-width: 600px; margin: 30px auto; background-color: #ffffff; border-radius: 12px; overflow: hidden; box-shadow: 0 4px 6px rgba(0,0,0,0.1);">
+        <div style="position: relative; background-color: #1a56db; padding: 40px 30px; text-align: center; color: #ffffff;">
+            <h1 style="margin: 0; font-size: 28px; font-weight: 800;">Félicitations !</h1>
+        </div>
+        <div style="padding: 40px; color: #333333; line-height: 1.8;">
+            <p style="font-size: 18px; margin-bottom: 20px;">Bonjour <strong th:text="${firstName}"></strong>,</p>
+            <p>Nous avons le plaisir de vous informer que votre demande d'ouverture de compte chez <strong>Amen Bank</strong> a été <span style="background-color: #d1fae5; color: #065f46; padding: 4px 10px; border-radius: 9999px; font-weight: 700;">APPROUVÉE</span> par nos administrateurs.</p>
+            <p>Pour finaliser la création de votre espace client sécurisé, veuillez cliquer sur le bouton ci-dessous pour choisir votre mot de passe et activer vos services bancaires :</p>
+            
+            <div style="text-align: center; margin: 40px 0;">
+                <a th:href="${activationUrl}" style="background-color: #2563eb; color: #ffffff; padding: 18px 35px; text-decoration: none; border-radius: 10px; font-weight: 800; display: inline-block; font-size: 16px; box-shadow: 0 4px 15px rgba(37, 99, 235, 0.3);">ACTIVER MON COMPTE MAINTENANT</a>
+            </div>
+            
+            <p style="font-size: 13px; color: #6b7280; margin-top: 30px;">
+                Ce lien d'activation est sécurisé et n'est valable que pendant 48 heures. Si vous n'êtes pas à l'origine de cette demande, vous pouvez ignorer cet email.
+            </p>
+        </div>
+        <div style="background-color: #1e293b; padding: 30px; text-align: center; font-size: 14px; color: #94a3b8;">
+            © 2024 Amen Bank. Tous droits réservés.
+        </div>
+    </div>
+</body>
+</html>
