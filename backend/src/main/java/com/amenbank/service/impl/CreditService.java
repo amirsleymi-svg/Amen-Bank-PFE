@@ -13,6 +13,7 @@ import com.amenbank.enums.CreditType;
 import com.amenbank.exception.BusinessException;
 import com.amenbank.exception.ForbiddenException;
 import com.amenbank.exception.ResourceNotFoundException;
+import com.amenbank.repository.AdminRepository;
 import com.amenbank.repository.CreditApplicationRepository;
 import com.amenbank.repository.UserRepository;
 import com.amenbank.service.AuditService;
@@ -59,6 +60,7 @@ public class CreditService {
 
     private final CreditApplicationRepository creditApplicationRepository;
     private final UserRepository userRepository;
+    private final AdminRepository adminRepository;
     private final AuditService auditService;
     private final EmailService emailService;
 
@@ -191,10 +193,9 @@ public class CreditService {
                 .build();
     }
 
-    // ─── Admin: update status ─────────────────────────────────────────
+    // ─── Approve credit application ─────────────────────────────────────
     @Transactional
-    public CreditApplicationResponse updateStatus(Long applicationId, CreditStatus newStatus,
-                                                   String reason, Long adminId) {
+    public CreditApplicationResponse approveCredit(Long applicationId, String reviewerEmail) {
         CreditApplication app = creditApplicationRepository.findById(applicationId)
                 .orElseThrow(() -> new ResourceNotFoundException("CreditApplication", applicationId));
 
@@ -202,29 +203,58 @@ public class CreditService {
             throw new BusinessException("Application already processed", "ALREADY_PROCESSED");
         }
 
-        if (newStatus == CreditStatus.REJECTED && (reason == null || reason.isBlank())) {
-            throw new BusinessException("Rejection reason is required when rejecting a credit application", "REJECTION_REASON_REQUIRED");
-        }
-
-        app.setStatus(newStatus);
-        app.setRejectionReason(newStatus == CreditStatus.REJECTED ? reason : null);
+        app.setStatus(CreditStatus.APPROVED);
+        app.setRejectionReason(null);
         app.setReviewedAt(java.time.LocalDateTime.now());
-
-        if (newStatus == CreditStatus.DISBURSED) {
-            app.setDisbursedAt(java.time.LocalDateTime.now());
-        }
+        setReviewer(app, reviewerEmail);
 
         CreditApplication saved = creditApplicationRepository.save(app);
 
         emailService.sendCreditStatusUpdate(
                 app.getUser().getEmail(), app.getUser().getFullName(),
-                app.getCreditType().name(), newStatus.name(), reason
-        );
+                app.getCreditType().name(), "APPROVED", null);
 
-        auditService.log("CREDIT_STATUS_UPDATED", "CreditApplication", applicationId,
-                null, newStatus + " - " + reason);
+        auditService.log("CREDIT_APPROVED", "CreditApplication", applicationId,
+                reviewerEmail, "Credit " + app.getCreditType() + " of " + app.getAmount() +
+                " TND approved for " + app.getUser().getEmail());
 
         return toCreditResponse(saved);
+    }
+
+    // ─── Reject credit application ───────────────────────────────────────
+    @Transactional
+    public CreditApplicationResponse rejectCredit(Long applicationId, String reason, String reviewerEmail) {
+        CreditApplication app = creditApplicationRepository.findById(applicationId)
+                .orElseThrow(() -> new ResourceNotFoundException("CreditApplication", applicationId));
+
+        if (app.getStatus() == CreditStatus.APPROVED || app.getStatus() == CreditStatus.REJECTED) {
+            throw new BusinessException("Application already processed", "ALREADY_PROCESSED");
+        }
+        if (reason == null || reason.isBlank()) {
+            throw new BusinessException("Rejection reason is required", "REJECTION_REASON_REQUIRED");
+        }
+
+        app.setStatus(CreditStatus.REJECTED);
+        app.setRejectionReason(reason);
+        app.setReviewedAt(java.time.LocalDateTime.now());
+        setReviewer(app, reviewerEmail);
+
+        CreditApplication saved = creditApplicationRepository.save(app);
+
+        emailService.sendCreditStatusUpdate(
+                app.getUser().getEmail(), app.getUser().getFullName(),
+                app.getCreditType().name(), "REJECTED", reason);
+
+        auditService.log("CREDIT_REJECTED", "CreditApplication", applicationId,
+                reviewerEmail, "Credit rejected for " + app.getUser().getEmail() + ": " + reason);
+
+        return toCreditResponse(saved);
+    }
+
+    private void setReviewer(CreditApplication app, String reviewerEmail) {
+        if (reviewerEmail != null) {
+            adminRepository.findByEmail(reviewerEmail).ifPresent(app::setReviewedBy);
+        }
     }
 
     // ─── Upload credit document ───────────────────────────────────────
@@ -335,7 +365,7 @@ public class CreditService {
     }
 
     public CreditApplicationResponse toCreditResponse(CreditApplication c) {
-        return CreditApplicationResponse.builder()
+        CreditApplicationResponse.CreditApplicationResponseBuilder b = CreditApplicationResponse.builder()
                 .id(c.getId())
                 .amount(c.getAmount())
                 .durationMonths(c.getDurationMonths())
@@ -347,7 +377,15 @@ public class CreditService {
                 .status(c.getStatus())
                 .rejectionReason(c.getRejectionReason())
                 .createdAt(c.getCreatedAt())
-                .reviewedAt(c.getReviewedAt())
-                .build();
+                .reviewedAt(c.getReviewedAt());
+
+        if (c.getUser() != null) {
+            b.clientName(c.getUser().getFullName());
+            b.clientEmail(c.getUser().getEmail());
+        }
+        if (c.getReviewedBy() != null) {
+            b.reviewedBy(c.getReviewedBy().getFullName());
+        }
+        return b.build();
     }
 }

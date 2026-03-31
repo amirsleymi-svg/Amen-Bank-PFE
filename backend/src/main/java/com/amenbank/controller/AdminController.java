@@ -1,11 +1,9 @@
 package com.amenbank.controller;
 
+import com.amenbank.dto.request.CashOperationRequest;
 import com.amenbank.dto.request.CreateAdminRequest;
 import com.amenbank.dto.response.*;
-import com.amenbank.enums.AdminRole;
-import com.amenbank.enums.CreditStatus;
-import com.amenbank.enums.KycStatus;
-import com.amenbank.enums.UserStatus;
+import com.amenbank.enums.*;
 import com.amenbank.service.impl.AdminService;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.security.SecurityRequirement;
@@ -151,15 +149,25 @@ public class AdminController {
                 adminService.listCreditApplications(page, size, status)));
     }
 
-    @PatchMapping("/credits/{id}/status")
-    @Operation(summary = "Update credit application status")
+    @PatchMapping("/credits/{id}/approve")
+    @Operation(summary = "Approve a credit application")
     @PreAuthorize("hasAuthority('CREDIT_APPROVE')")
-    public ResponseEntity<ApiResponse<CreditApplicationResponse>> updateCreditStatus(
+    public ResponseEntity<ApiResponse<CreditApplicationResponse>> approveCredit(
             @PathVariable Long id,
-            @RequestParam CreditStatus status,
-            @RequestParam(required = false) String reason) {
-        return ResponseEntity.ok(ApiResponse.ok("Credit status updated",
-                adminService.updateCreditStatus(id, status, reason)));
+            @AuthenticationPrincipal UserDetails userDetails) {
+        return ResponseEntity.ok(ApiResponse.ok("Credit approved",
+                adminService.approveCredit(id, actorEmail(userDetails))));
+    }
+
+    @PatchMapping("/credits/{id}/reject")
+    @Operation(summary = "Reject a credit application — reason is mandatory")
+    @PreAuthorize("hasAuthority('CREDIT_APPROVE')")
+    public ResponseEntity<ApiResponse<CreditApplicationResponse>> rejectCredit(
+            @PathVariable Long id,
+            @RequestParam @NotBlank String reason,
+            @AuthenticationPrincipal UserDetails userDetails) {
+        return ResponseEntity.ok(ApiResponse.ok("Credit rejected",
+                adminService.rejectCredit(id, reason, actorEmail(userDetails))));
     }
 
     // ─── Admin management ─────────────────────────────────────────────
@@ -257,6 +265,91 @@ public class AdminController {
             @DateTimeFormat(iso = DateTimeFormat.ISO.DATE_TIME) LocalDateTime to) {
         return ResponseEntity.ok(ApiResponse.ok("Audit logs loaded",
                 adminService.getAuditLogs(page, size, action, actorId, from, to)));
+    }
+
+    // ═══════════════════════════════════════════════════════════════════
+    //  EMPLOYEE OPERATIONS — transfers, deposits, withdrawals, view accounts
+    // ═══════════════════════════════════════════════════════════════════
+
+    // ─── View client accounts (read-only) ────────────────────────────
+    @GetMapping("/users/{userId}/accounts")
+    @Operation(summary = "Get all accounts for a specific client (read-only)")
+    @PreAuthorize("hasAuthority('ACCOUNT_READ')")
+    public ResponseEntity<ApiResponse<List<AccountResponse>>> getClientAccounts(
+            @PathVariable Long userId) {
+        return ResponseEntity.ok(ApiResponse.ok("Accounts loaded",
+                adminService.getClientAccounts(userId)));
+    }
+
+    @GetMapping("/accounts/{accountId}/transactions")
+    @Operation(summary = "Get transactions for any account (read-only)")
+    @PreAuthorize("hasAuthority('TRANSACTION_READ')")
+    public ResponseEntity<ApiResponse<PageResponse<TransactionResponse>>> getAccountTransactions(
+            @PathVariable Long accountId,
+            @RequestParam(defaultValue = "0") @Min(0) int page,
+            @RequestParam(defaultValue = "20") @Min(1) @Max(100) int size) {
+        return ResponseEntity.ok(ApiResponse.ok("Transactions loaded",
+                adminService.getAccountTransactions(accountId, page, size)));
+    }
+
+    // ─── Transfer validation ─────────────────────────────────────────
+    @GetMapping("/transfers")
+    @Operation(summary = "List all transfers with optional status filter")
+    @PreAuthorize("hasAuthority('TRANSFER_VALIDATE')")
+    public ResponseEntity<ApiResponse<PageResponse<TransferResponse>>> listTransfers(
+            @RequestParam(defaultValue = "0") @Min(0) int page,
+            @RequestParam(defaultValue = "20") @Min(1) @Max(100) int size,
+            @RequestParam(required = false) TransferStatus status) {
+        return ResponseEntity.ok(ApiResponse.ok("Transfers loaded",
+                adminService.listAllTransfers(page, size, status)));
+    }
+
+    @PatchMapping("/transfers/{id}/approve")
+    @Operation(summary = "Approve a pending transfer")
+    @PreAuthorize("hasAuthority('TRANSFER_VALIDATE')")
+    public ResponseEntity<ApiResponse<TransferResponse>> approveTransfer(
+            @PathVariable Long id,
+            @AuthenticationPrincipal UserDetails userDetails) {
+        return ResponseEntity.ok(ApiResponse.ok("Transfer approved",
+                adminService.approveTransfer(id, actorEmail(userDetails))));
+    }
+
+    @PatchMapping("/transfers/{id}/reject")
+    @Operation(summary = "Reject a pending transfer — reason is mandatory")
+    @PreAuthorize("hasAuthority('TRANSFER_VALIDATE')")
+    public ResponseEntity<ApiResponse<TransferResponse>> rejectTransfer(
+            @PathVariable Long id,
+            @RequestParam @NotBlank String reason,
+            @AuthenticationPrincipal UserDetails userDetails) {
+        return ResponseEntity.ok(ApiResponse.ok("Transfer rejected",
+                adminService.rejectTransfer(id, reason, actorEmail(userDetails))));
+    }
+
+    // ─── Cash operations: deposit & withdrawal ───────────────────────
+    @PostMapping("/accounts/{accountId}/deposit")
+    @Operation(summary = "Deposit cash into a client account (counter operation)")
+    @PreAuthorize("hasAuthority('CASH_OPERATION')")
+    public ResponseEntity<ApiResponse<TransactionResponse>> deposit(
+            @PathVariable Long accountId,
+            @Valid @RequestBody CashOperationRequest req,
+            @AuthenticationPrincipal UserDetails userDetails) {
+        return ResponseEntity.status(HttpStatus.CREATED)
+                .body(ApiResponse.ok("Deposit completed",
+                        adminService.deposit(accountId, req.getAmount(),
+                                req.getDescription(), actorEmail(userDetails))));
+    }
+
+    @PostMapping("/accounts/{accountId}/withdraw")
+    @Operation(summary = "Withdraw cash from a client account (counter operation)")
+    @PreAuthorize("hasAuthority('CASH_OPERATION')")
+    public ResponseEntity<ApiResponse<TransactionResponse>> withdraw(
+            @PathVariable Long accountId,
+            @Valid @RequestBody CashOperationRequest req,
+            @AuthenticationPrincipal UserDetails userDetails) {
+        return ResponseEntity.status(HttpStatus.CREATED)
+                .body(ApiResponse.ok("Withdrawal completed",
+                        adminService.withdraw(accountId, req.getAmount(),
+                                req.getDescription(), actorEmail(userDetails))));
     }
 
     // ─── Helpers ─────────────────────────────────────────────────────

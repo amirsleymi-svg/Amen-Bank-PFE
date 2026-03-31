@@ -2,9 +2,7 @@ package com.amenbank.service.impl;
 
 import com.amenbank.dto.request.CreateAdminRequest;
 import com.amenbank.dto.response.*;
-import com.amenbank.entity.Admin;
-import com.amenbank.entity.KycRequest;
-import com.amenbank.entity.User;
+import com.amenbank.entity.*;
 import com.amenbank.enums.*;
 import com.amenbank.exception.*;
 import com.amenbank.repository.*;
@@ -20,6 +18,7 @@ import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.multipart.MultipartFile;
 
 import java.io.IOException;
+import java.math.BigDecimal;
 import java.nio.file.*;
 import java.security.SecureRandom;
 import java.time.LocalDateTime;
@@ -43,6 +42,9 @@ public class AdminService {
     private final EmailService emailService;
     private final CreditService creditService;
     private final AccountService accountService;
+    private final TransferService transferService;
+    private final TransferRepository transferRepository;
+    private final TransactionRepository transactionRepository;
     private final PasswordEncoder passwordEncoder;
 
     @Value("${app.upload-path:/data/uploads}")
@@ -275,8 +277,14 @@ public class AdminService {
         return toPageResponse(p.map(creditService::toCreditResponse));
     }
 
-    public CreditApplicationResponse updateCreditStatus(Long id, CreditStatus status, String reason) {
-        return creditService.updateStatus(id, status, reason, null);
+    @Transactional
+    public CreditApplicationResponse approveCredit(Long id, String reviewerEmail) {
+        return creditService.approveCredit(id, reviewerEmail);
+    }
+
+    @Transactional
+    public CreditApplicationResponse rejectCredit(Long id, String reason, String reviewerEmail) {
+        return creditService.rejectCredit(id, reason, reviewerEmail);
     }
 
     // ─── Audit logs ───────────────────────────────────────────────────
@@ -369,6 +377,132 @@ public class AdminService {
                                 .collect(Collectors.toList()))
                         .build())
                 .collect(Collectors.toList());
+    }
+
+    // ═══════════════════════════════════════════════════════════════════
+    //  EMPLOYEE OPERATIONS — transfer validation, deposits, withdrawals
+    // ═══════════════════════════════════════════════════════════════════
+
+    // ─── View client accounts (read-only, any account) ───────────────
+    public List<AccountResponse> getClientAccounts(Long userId) {
+        userRepository.findById(userId)
+                .orElseThrow(() -> new ResourceNotFoundException("User", userId));
+        return accountRepository.findByUserId(userId).stream()
+                .map(accountService::toAccountResponse)
+                .collect(Collectors.toList());
+    }
+
+    public PageResponse<TransactionResponse> getAccountTransactions(
+            Long accountId, int page, int size) {
+        accountRepository.findById(accountId)
+                .orElseThrow(() -> new ResourceNotFoundException("Account", accountId));
+        Page<Transaction> txPage = transactionRepository.findByAccountIdOrderByCreatedAtDesc(
+                accountId, PageRequest.of(page, size));
+        return toPageResponse(txPage.map(accountService::toTxResponse));
+    }
+
+    // ─── Transfer validation ─────────────────────────────────────────
+    public PageResponse<TransferResponse> listAllTransfers(int page, int size, TransferStatus status) {
+        Pageable pageable = PageRequest.of(page, size, Sort.by("createdAt").descending());
+        Page<Transfer> p = (status != null)
+                ? transferRepository.findByStatus(status, pageable)
+                : transferRepository.findAll(pageable);
+
+        return toPageResponse(p.map(t -> {
+            TransferResponse r = transferService.toTransferResponse(t);
+            if (t.getFromAccount() != null && t.getFromAccount().getUser() != null) {
+                r.setClientName(t.getFromAccount().getUser().getFullName());
+                r.setClientEmail(t.getFromAccount().getUser().getEmail());
+            }
+            return r;
+        }));
+    }
+
+    @Transactional
+    public TransferResponse approveTransfer(Long transferId, String employeeEmail) {
+        Transfer transfer = transferRepository.findById(transferId)
+                .orElseThrow(() -> new ResourceNotFoundException("Transfer", transferId));
+
+        if (transfer.getStatus() != TransferStatus.PENDING) {
+            throw new BusinessException("Only pending transfers can be approved", "NOT_PENDING");
+        }
+
+        User user = transfer.getFromAccount().getUser();
+        TransferResponse response = transferService.executeTransfer(transfer, user);
+
+        auditService.log("TRANSFER_APPROVED", "Transfer", transferId, employeeEmail,
+                "Transfer of " + transfer.getAmount() + " TND approved for " + user.getEmail());
+        return response;
+    }
+
+    @Transactional
+    public TransferResponse rejectTransfer(Long transferId, String reason, String employeeEmail) {
+        Transfer transfer = transferRepository.findById(transferId)
+                .orElseThrow(() -> new ResourceNotFoundException("Transfer", transferId));
+
+        if (transfer.getStatus() != TransferStatus.PENDING) {
+            throw new BusinessException("Only pending transfers can be rejected", "NOT_PENDING");
+        }
+        if (reason == null || reason.isBlank()) {
+            throw new BusinessException("Rejection reason is required", "REJECTION_REASON_REQUIRED");
+        }
+
+        transfer.setStatus(TransferStatus.CANCELLED);
+        transfer.setFailureReason(reason);
+        transferRepository.save(transfer);
+
+        User user = transfer.getFromAccount().getUser();
+        emailService.sendGeneric(user.getEmail(), "Virement refusé — Amen Bank",
+                "Votre virement de " + transfer.getAmount() + " TND vers " + transfer.getToName() +
+                " a été refusé.\nMotif : " + reason);
+
+        auditService.log("TRANSFER_REJECTED", "Transfer", transferId, employeeEmail,
+                "Transfer rejected for " + user.getEmail() + ": " + reason);
+
+        return transferService.toTransferResponse(transfer);
+    }
+
+    // ─── Cash operations: deposit & withdrawal ───────────────────────
+    @Transactional
+    public TransactionResponse deposit(Long accountId, BigDecimal amount,
+                                        String description, String employeeEmail) {
+        Account account = accountRepository.findById(accountId)
+                .orElseThrow(() -> new ResourceNotFoundException("Account", accountId));
+
+        if (account.getStatus() != AccountStatus.ACTIVE) {
+            throw new BusinessException("Account is not active", "ACCOUNT_NOT_ACTIVE");
+        }
+
+        Transaction tx = accountService.creditAccount(account, amount,
+                null, "Dépôt au guichet",
+                TransactionCategory.DEPOSIT,
+                description != null && !description.isBlank() ? description : "Dépôt espèces au guichet");
+
+        auditService.log("CASH_DEPOSIT", "Account", accountId, employeeEmail,
+                "Deposit of " + amount + " TND into account " + account.getAccountNumber());
+
+        return accountService.toTxResponse(tx);
+    }
+
+    @Transactional
+    public TransactionResponse withdraw(Long accountId, BigDecimal amount,
+                                         String description, String employeeEmail) {
+        Account account = accountRepository.findById(accountId)
+                .orElseThrow(() -> new ResourceNotFoundException("Account", accountId));
+
+        if (account.getStatus() != AccountStatus.ACTIVE) {
+            throw new BusinessException("Account is not active", "ACCOUNT_NOT_ACTIVE");
+        }
+
+        Transaction tx = accountService.debitAccount(account, amount,
+                null, "Retrait au guichet",
+                TransactionCategory.WITHDRAWAL,
+                description != null && !description.isBlank() ? description : "Retrait espèces au guichet");
+
+        auditService.log("CASH_WITHDRAWAL", "Account", accountId, employeeEmail,
+                "Withdrawal of " + amount + " TND from account " + account.getAccountNumber());
+
+        return accountService.toTxResponse(tx);
     }
 
     // ─── Private helpers ─────────────────────────────────────────────

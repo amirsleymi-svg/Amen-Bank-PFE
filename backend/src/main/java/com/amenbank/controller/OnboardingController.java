@@ -78,9 +78,9 @@ public class OnboardingController {
 
     // ─── ADMIN: Create account from request ───────────────────────────
     @PostMapping("/requests/create-account")
-    @Operation(summary = "Create user account from a registration request (admin)",
+    @Operation(summary = "Create user account from a registration request (admin only)",
                security = @SecurityRequirement(name = "bearerAuth"))
-    @PreAuthorize("hasAuthority('USER_MANAGE')")
+    @PreAuthorize("hasAuthority('ACCOUNT_CREATE')")
     public ResponseEntity<ApiResponse<UserResponse>> createAccount(
             @Valid @RequestBody CreateAccountFromRequestDto dto,
             @AuthenticationPrincipal UserDetails userDetails) {
@@ -92,9 +92,9 @@ public class OnboardingController {
 
     // ─── ADMIN: Reject registration request ───────────────────────────
     @PatchMapping("/requests/{id}/reject")
-    @Operation(summary = "Reject a registration request (admin)",
+    @Operation(summary = "Reject a registration request (admin only)",
                security = @SecurityRequirement(name = "bearerAuth"))
-    @PreAuthorize("hasAuthority('USER_MANAGE')")
+    @PreAuthorize("hasAuthority('ACCOUNT_CREATE')")
     public ResponseEntity<ApiResponse<Void>> rejectRequest(
             @PathVariable Long id,
             @RequestParam @NotBlank String reason,

@@ -13,4 +13,7 @@ import java.util.List;
 public interface TransferRepository extends JpaRepository<Transfer, Long> {
     Page<Transfer> findByFromAccountUserIdOrderByCreatedAtDesc(Long userId, Pageable pageable);
     List<Transfer> findByStatusAndScheduledDateLessThanEqual(TransferStatus status, LocalDate date);
+
+    // Employee/Admin: list transfers filtered by status
+    Page<Transfer> findByStatus(TransferStatus status, Pageable pageable);
 }
