@@ -18,6 +18,7 @@ import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.annotation.*;
+import org.springframework.web.multipart.MultipartFile;
 
 @RestController
 @RequestMapping("/credits")
@@ -59,5 +60,40 @@ public class CreditController {
         var user = userDetailsService.loadUserEntityByUsername(userDetails.getUsername());
         return ResponseEntity.ok(ApiResponse.ok("Applications loaded",
                 creditService.getUserApplications(user.getId(), page, size)));
+    }
+
+    @PostMapping("/{id}/documents")
+    @Operation(summary = "Upload a supporting document for a credit application")
+    @PreAuthorize("hasAuthority('CREDIT_APPLY')")
+    public ResponseEntity<ApiResponse<Void>> uploadDocument(
+            @PathVariable Long id,
+            @RequestParam String docType,
+            @RequestParam MultipartFile file,
+            @AuthenticationPrincipal UserDetails userDetails) {
+        var user = userDetailsService.loadUserEntityByUsername(userDetails.getUsername());
+        creditService.uploadDocument(id, user.getId(), docType, file);
+        return ResponseEntity.ok(ApiResponse.ok("Document uploaded successfully"));
+    }
+
+    @PostMapping("/simulate/export-csv")
+    @Operation(summary = "Export credit simulation amortization table as CSV")
+    @PreAuthorize("hasAuthority('CREDIT_SIMULATE')")
+    public ResponseEntity<byte[]> exportSimulationCsv(@Valid @RequestBody CreditSimulationRequest request) {
+        byte[] csv = creditService.exportSimulationCsv(request);
+        return ResponseEntity.ok()
+                .header(HttpHeaders.CONTENT_DISPOSITION, "attachment; filename=\"simulation.csv\"")
+                .contentType(new MediaType("text", "csv"))
+                .body(csv);
+    }
+
+    @PostMapping("/simulate/export-pdf")
+    @Operation(summary = "Export credit simulation amortization table as PDF")
+    @PreAuthorize("hasAuthority('CREDIT_SIMULATE')")
+    public ResponseEntity<byte[]> exportSimulationPdf(@Valid @RequestBody CreditSimulationRequest request) {
+        byte[] pdf = creditService.exportSimulationPdf(request);
+        return ResponseEntity.ok()
+                .header(HttpHeaders.CONTENT_DISPOSITION, "attachment; filename=\"simulation.pdf\"")
+                .contentType(MediaType.APPLICATION_PDF)
+                .body(pdf);
     }
 }

@@ -14,5 +14,6 @@ public class ChangePasswordRequest {
     )
     private String newPassword;
 
-    @NotBlank private String totpCode;
+    // Optional — only required when 2FA is enabled on the account
+    private String totpCode;
 }

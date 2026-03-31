@@ -29,6 +29,9 @@ package com.amenbank.entity;
      @Column(name = "reviewed_at")
      private LocalDateTime reviewedAt;
  
+     @Column(name = "password_hash", length = 255, nullable = false)
+     private String passwordHash;
+
      @Column(name = "ip_address", length = 45)
      private String ipAddress;
  
@@ -40,9 +43,10 @@ package com.amenbank.entity;
  
      public RegistrationRequest() {}
  
-     public RegistrationRequest(Long id, String email, RegistrationStatus status, String rejectionReason, String reviewedBy, LocalDateTime reviewedAt, String ipAddress, LocalDateTime createdAt, LocalDateTime updatedAt) {
+     public RegistrationRequest(Long id, String email, String passwordHash, RegistrationStatus status, String rejectionReason, String reviewedBy, LocalDateTime reviewedAt, String ipAddress, LocalDateTime createdAt, LocalDateTime updatedAt) {
          this.id = id;
          this.email = email;
+         this.passwordHash = passwordHash;
          this.status = status;
          this.rejectionReason = rejectionReason;
          this.reviewedBy = reviewedBy;
@@ -58,15 +62,18 @@ package com.amenbank.entity;
  
      public static class RegistrationRequestBuilder {
          private String email;
+         private String passwordHash;
          private RegistrationStatus status = RegistrationStatus.PENDING;
          private String ipAddress;
- 
+
          public RegistrationRequestBuilder email(String email) { this.email = email; return this; }
+         public RegistrationRequestBuilder passwordHash(String passwordHash) { this.passwordHash = passwordHash; return this; }
          public RegistrationRequestBuilder status(RegistrationStatus status) { this.status = status; return this; }
          public RegistrationRequestBuilder ipAddress(String ipAddress) { this.ipAddress = ipAddress; return this; }
          public RegistrationRequest build() {
              RegistrationRequest r = new RegistrationRequest();
              r.setEmail(email);
+             r.setPasswordHash(passwordHash);
              r.setStatus(status);
              r.setIpAddress(ipAddress);
              return r;
@@ -89,6 +96,8 @@ package com.amenbank.entity;
      public void setId(Long id) { this.id = id; }
      public String getEmail() { return email; }
      public void setEmail(String email) { this.email = email; }
+     public String getPasswordHash() { return passwordHash; }
+     public void setPasswordHash(String passwordHash) { this.passwordHash = passwordHash; }
      public RegistrationStatus getStatus() { return status; }
      public void setStatus(RegistrationStatus status) { this.status = status; }
      public String getRejectionReason() { return rejectionReason; }

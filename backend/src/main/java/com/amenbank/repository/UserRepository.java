@@ -9,6 +9,7 @@ import org.springframework.data.jpa.repository.Modifying;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
 import org.springframework.stereotype.Repository;
+import org.springframework.transaction.annotation.Transactional;
 
 import java.time.LocalDateTime;
 import java.util.Optional;
@@ -21,9 +22,7 @@ public interface UserRepository extends JpaRepository<User, Long> {
     Optional<User> findByIdCardNumber(String idCardNumber);
 
     @Query("SELECT u FROM User u WHERE u.email = :identifier OR u.username = :identifier")
-    Optional<User> findByEmailOrUsername(
-            @Param("identifier") String email,
-            @Param("identifier") String username);
+    Optional<User> findByEmailOrUsername(@Param("identifier") String identifier);
 
     boolean existsByEmail(String email);
     boolean existsByUsername(String username);
@@ -43,11 +42,20 @@ public interface UserRepository extends JpaRepository<User, Long> {
             @Param("search") String search,
             Pageable pageable);
 
+    @Query("SELECT u FROM User u WHERE " +
+           "LOWER(u.firstName) LIKE LOWER(CONCAT('%', :search, '%')) " +
+           "OR LOWER(u.lastName) LIKE LOWER(CONCAT('%', :search, '%')) " +
+           "OR LOWER(u.email) LIKE LOWER(CONCAT('%', :search, '%')) " +
+           "OR LOWER(u.username) LIKE LOWER(CONCAT('%', :search, '%'))")
+    Page<User> searchByKeyword(@Param("search") String search, Pageable pageable);
+
     @Modifying
+    @Transactional
     @Query("UPDATE User u SET u.failedLoginAttempts = 0, u.lockedUntil = null WHERE u.id = :id")
     void resetLoginAttempts(@Param("id") Long id);
 
     @Modifying
+    @Transactional
     @Query("UPDATE User u SET u.failedLoginAttempts = u.failedLoginAttempts + 1, " +
            "u.lockedUntil = :lockedUntil WHERE u.id = :id")
     void incrementFailedAttempts(@Param("id") Long id, @Param("lockedUntil") LocalDateTime lockedUntil);

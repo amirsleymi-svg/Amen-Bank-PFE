@@ -45,30 +45,29 @@ public class SecurityConfig {
     private int bcryptStrength;
 
     // ─── Public endpoints (no auth required) ─────────────────────────
+    // NOTE: paths are relative to context-path (/api/v1) — do NOT add /api/v1/ prefix here.
+    // NOTE: /auth/register is intentionally excluded — admin only via @PreAuthorize
     private static final String[] PUBLIC_URLS = {
-        "/auth/**",
-        "/api/v1/auth/**",
-        "/onboarding/register",   // client submits email request
-        "/api/v1/onboarding/register",
-        "/onboarding/activate",   // client activates account via token
-        "/api/v1/onboarding/activate",
+        "/auth/login",
+        "/auth/totp/verify",
+        "/auth/refresh",
+        "/auth/password/forgot",
+        "/auth/password/reset",
+        "/auth/email/verify",
+        "/onboarding/register",          // client submits registration request
+        "/onboarding/activate",          // client activates account via token
+        "/auth/totp/mandatory-setup",    // mandatory 2FA enrollment step 1
+        "/auth/totp/mandatory-enable",   // mandatory 2FA enrollment step 2
         "/actuator/health",
-        "/api/v1/actuator/health",
         "/actuator/info",
-        "/api/v1/actuator/info",
         "/v3/api-docs/**",
-        "/api/v1/v3/api-docs/**",
         "/swagger-ui/**",
-        "/api/v1/swagger-ui/**",
         "/swagger-ui.html",
-        "/api/v1/swagger-ui.html",
-        "/api-docs/**",
-        "/api/v1/api-docs/**"
+        "/api-docs/**"
     };
 
     private static final String[] ADMIN_ONLY = {
-        "/admin/**",
-        "/api/v1/admin/**"
+        "/admin/**"
     };
 
     @Bean
@@ -92,9 +91,8 @@ public class SecurityConfig {
             .authorizeHttpRequests(auth -> auth
                 .requestMatchers(PUBLIC_URLS).permitAll()
                 .requestMatchers(HttpMethod.OPTIONS, "/**").permitAll()
-                .requestMatchers("/admin/register", "/api/v1/admin/register").permitAll()  // uses secret key
-                .requestMatchers(ADMIN_ONLY).hasAnyAuthority("ROLE_SUPER_ADMIN", "ROLE_ADMIN", "ROLE_AUDITOR")
-                .requestMatchers("/actuator/**", "/api/v1/actuator/**").hasAuthority("ROLE_SUPER_ADMIN")
+                .requestMatchers(ADMIN_ONLY).hasAnyAuthority("ROLE_ADMIN", "ROLE_EMPLOYEE")
+                .requestMatchers("/actuator/**", "/api/v1/actuator/**").hasAuthority("ROLE_ADMIN")
                 .anyRequest().authenticated()
             )
 

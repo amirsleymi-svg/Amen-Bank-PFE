@@ -1,14 +1,15 @@
 package com.amenbank.security.jwt;
 
 import io.jsonwebtoken.*;
-import io.jsonwebtoken.io.Decoders;
 import io.jsonwebtoken.security.Keys;
+import jakarta.annotation.PostConstruct;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.stereotype.Component;
 
 import javax.crypto.SecretKey;
+import java.nio.charset.StandardCharsets;
 import java.util.*;
 import java.util.function.Function;
 
@@ -25,10 +26,24 @@ public class JwtUtils {
     @Value("${jwt.refresh-expiration-ms}")
     private long refreshExpirationMs;
 
+    // ─── Startup validation ───────────────────────────────────────────
+    @PostConstruct
+    public void validateSecret() {
+        if (jwtSecret == null || jwtSecret.isBlank()) {
+            throw new IllegalStateException(
+                    "JWT secret is not configured. Set the JWT_SECRET environment variable.");
+        }
+        if (jwtSecret.getBytes(StandardCharsets.UTF_8).length < 32) {
+            throw new IllegalStateException(
+                    "JWT secret is too short (minimum 32 bytes required for HS256). " +
+                    "Update the JWT_SECRET environment variable.");
+        }
+        log.info("JWT secret validated ({} bytes)", jwtSecret.getBytes(StandardCharsets.UTF_8).length);
+    }
+
     // ─── Key ─────────────────────────────────────────────────────────
     private SecretKey getSigningKey() {
-        byte[] keyBytes = Decoders.BASE64.decode(jwtSecret);
-        return Keys.hmacShaKeyFor(keyBytes);
+        return Keys.hmacShaKeyFor(jwtSecret.getBytes(StandardCharsets.UTF_8));
     }
 
     // ─── Generate tokens ─────────────────────────────────────────────

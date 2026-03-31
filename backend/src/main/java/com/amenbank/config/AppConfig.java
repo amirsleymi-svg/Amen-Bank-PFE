@@ -17,8 +17,7 @@ import org.springframework.data.redis.connection.RedisConnectionFactory;
 import org.springframework.data.redis.core.RedisTemplate;
 import org.springframework.data.redis.serializer.StringRedisSerializer;
 import org.springframework.scheduling.concurrent.ThreadPoolTaskExecutor;
-import org.springframework.web.servlet.config.annotation.CorsRegistry;
-import org.springframework.web.servlet.config.annotation.WebMvcConfigurer;
+import org.springframework.security.concurrent.DelegatingSecurityContextExecutor;
 
 import java.util.concurrent.Executor;
 
@@ -47,7 +46,7 @@ public class AppConfig {
                 .disable(SerializationFeature.WRITE_DATES_AS_TIMESTAMPS);
     }
 
-    // ─── Async executor ───────────────────────────────────────────
+    // ─── Async executor (propagates security context to async threads) ──
     @Bean(name = "taskExecutor")
     public Executor taskExecutor() {
         ThreadPoolTaskExecutor executor = new ThreadPoolTaskExecutor();
@@ -56,7 +55,7 @@ public class AppConfig {
         executor.setQueueCapacity(100);
         executor.setThreadNamePrefix("amenbank-async-");
         executor.initialize();
-        return executor;
+        return new DelegatingSecurityContextExecutor(executor);
     }
 
     // ─── OpenAPI / Swagger ────────────────────────────────────────

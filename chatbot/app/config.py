@@ -15,7 +15,7 @@ class Settings(BaseSettings):
     OLLAMA_ENABLED: bool = True
     OLLAMA_BASE_URL: str = "http://localhost:11434"
     OLLAMA_MODEL: str = "llama3.2:3b"
-    OLLAMA_TIMEOUT_SECONDS: int = 20
+    OLLAMA_TIMEOUT_SECONDS: int = 60
 
     class Config:
         env_file = ".env"

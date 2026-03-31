@@ -1,6 +1,6 @@
 import { Component, OnInit } from '@angular/core';
 import { CommonModule, DatePipe, DecimalPipe } from '@angular/common';
-import { FormsModule } from '@angular/forms';
+import { FormsModule, ReactiveFormsModule, FormBuilder, FormGroup, Validators } from '@angular/forms';
 import { RouterModule } from '@angular/router';
 import { HttpClient, HttpParams } from '@angular/common/http';
 import { environment } from '../../../environments/environment';
@@ -9,19 +9,21 @@ import { OnboardingRequestsComponent } from './components/onboarding-requests/on
 @Component({
   selector: 'app-admin',
   standalone: true,
-  imports: [CommonModule, FormsModule, RouterModule, DatePipe, DecimalPipe, OnboardingRequestsComponent],
+  imports: [CommonModule, FormsModule, ReactiveFormsModule, RouterModule, DatePipe, DecimalPipe, OnboardingRequestsComponent],
   templateUrl: './admin.component.html',
   styleUrls: ['./admin.component.scss']
 })
 export class AdminComponent implements OnInit {
 
-  activeView: 'dashboard' | 'kyc' | 'users' | 'credits' | 'audit' | 'onboarding' = 'dashboard';
+  activeView: 'dashboard' | 'kyc' | 'users' | 'credits' | 'audit' | 'onboarding' | 'roles' = 'dashboard';
 
-  stats: any       = null;
-  kycList: any[]   = [];
-  userList: any[]  = [];
-  creditList: any[]= [];
-  auditList: any[] = [];
+  stats: any        = null;
+  kycList: any[]    = [];
+  userList: any[]   = [];
+  creditList: any[] = [];
+  auditList: any[]  = [];
+  adminList: any[]  = [];
+  roleList: any[]   = [];
 
   tableLoading = false;
   now = new Date();
@@ -34,19 +36,43 @@ export class AdminComponent implements OnInit {
   auditSearch      = '';
 
   // Pagination
-  userPage = 0;   userTotalPages  = 1;
+  userPage  = 0;  userTotalPages  = 1;
   auditPage = 0;  auditTotalPages = 1;
+  adminPage = 0;  adminTotalPages = 1;
 
   // Reject modal
   rejectModalOpen = false;
   rejectTarget: { type: string; id: number } | null = null;
   rejectReason = '';
 
+  // Create admin modal
+  createAdminModalOpen = false;
+  createAdminLoading   = false;
+  createAdminError     = '';
+  createAdminForm!: FormGroup;
+
+  // Change role modal
+  changeRoleModalOpen = false;
+  changeRoleTarget: any = null;
+  changeRoleValue = 'ADMIN';
+
+  readonly ADMIN_ROLES = ['ADMIN'];
+
   private readonly API = environment.apiUrl + '/admin';
 
-  constructor(private http: HttpClient) {}
+  constructor(private http: HttpClient, private fb: FormBuilder) {}
 
-  ngOnInit(): void { this.loadStats(); }
+  ngOnInit(): void {
+    this.loadStats();
+    this.createAdminForm = this.fb.group({
+      username:  ['', [Validators.required, Validators.minLength(3), Validators.maxLength(50)]],
+      email:     ['', [Validators.required, Validators.email]],
+      password:  ['', [Validators.required, Validators.minLength(8)]],
+      firstName: ['', Validators.required],
+      lastName:  ['', Validators.required],
+      role:      ['ADMIN', Validators.required]
+    });
+  }
 
   // ── Stats ─────────────────────────────────────────────────────
   loadStats(): void {
@@ -135,10 +161,86 @@ export class AdminComponent implements OnInit {
 
   changeAuditPage(p: number): void { this.auditPage = p; this.loadAuditLogs(); }
 
+  // ── Gestion des rôles / admins ────────────────────────────────
+  loadRoles(): void {
+    this.activeView = 'roles';
+    this.tableLoading = true;
+    this.http.get<any>(`${this.API}/roles`).subscribe({
+      next: r => { this.roleList = r.data; this.tableLoading = false; }
+    });
+    this.loadAdmins();
+  }
+
+  loadAdmins(): void {
+    const params = new HttpParams().set('page', this.adminPage).set('size', 20);
+    this.http.get<any>(`${this.API}/admins`, { params }).subscribe({
+      next: r => {
+        this.adminList       = r.data.content;
+        this.adminTotalPages = r.data.totalPages;
+      }
+    });
+  }
+
+  changeAdminPage(p: number): void { this.adminPage = p; this.loadAdmins(); }
+
+  // Create admin modal
+  openCreateAdminModal(): void {
+    this.createAdminForm.reset({ role: 'ADMIN' });
+    this.createAdminError   = '';
+    this.createAdminLoading = false;
+    this.createAdminModalOpen = true;
+  }
+
+  closeCreateAdminModal(): void { this.createAdminModalOpen = false; }
+
+  submitCreateAdmin(): void {
+    if (this.createAdminForm.invalid) {
+      this.createAdminForm.markAllAsTouched();
+      return;
+    }
+    this.createAdminLoading = true;
+    this.createAdminError   = '';
+    this.http.post<any>(`${this.API}/admins`, this.createAdminForm.value).subscribe({
+      next: () => {
+        this.createAdminLoading   = false;
+        this.createAdminModalOpen = false;
+        this.loadAdmins();
+      },
+      error: err => {
+        this.createAdminLoading = false;
+        this.createAdminError   = err?.error?.message || 'Erreur lors de la création';
+      }
+    });
+  }
+
+  // Change role modal
+  openChangeRoleModal(admin: any): void {
+    this.changeRoleTarget   = admin;
+    this.changeRoleValue    = admin.role;
+    this.changeRoleModalOpen = true;
+  }
+
+  closeChangeRoleModal(): void { this.changeRoleModalOpen = false; this.changeRoleTarget = null; }
+
+  confirmChangeRole(): void {
+    if (!this.changeRoleTarget) return;
+    this.http.patch<any>(`${this.API}/admins/${this.changeRoleTarget.id}/role`, null,
+      { params: { role: this.changeRoleValue } }
+    ).subscribe({ next: () => { this.closeChangeRoleModal(); this.loadAdmins(); } });
+  }
+
+  toggleAdmin(admin: any): void {
+    const action = admin.active ? 'désactiver' : 'activer';
+    if (!confirm(`Voulez-vous ${action} cet administrateur ?`)) return;
+    this.http.patch<any>(`${this.API}/admins/${admin.id}/status`, null,
+      { params: { active: String(!admin.active) } }
+    ).subscribe({ next: () => this.loadAdmins() });
+  }
+
   // ── Reject modal ──────────────────────────────────────────────
   openRejectModal(type: string, id: number): void {
-    this.rejectTarget   = { type, id };
-    this.rejectReason   = '';
+    this.rejectTarget    = { type, id };
+    this.rejectReason    = '';
     this.rejectModalOpen = true;
   }
 
@@ -171,5 +273,12 @@ export class AdminComponent implements OnInit {
   }
   creditTypeLabel(t: string): string {
     return ({ PERSONAL:'Personnel', MORTGAGE:'Immobilier', AUTO:'Auto', BUSINESS:'Entreprise', STUDENT:'Étudiant' } as any)[t] ?? t;
+  }
+  adminRoleLabel(r: string): string {
+    return r === 'ADMIN' ? 'Administrateur' : r;
+  }
+  fieldError(field: string): boolean {
+    const c = this.createAdminForm.get(field);
+    return !!(c && c.invalid && c.touched);
   }
 }

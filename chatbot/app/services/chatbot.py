@@ -5,6 +5,7 @@ Chatbot brain: intent detection, FAQ answers, backend API calls, and Ollama fall
 from __future__ import annotations
 
 import json
+import logging
 from datetime import datetime
 from typing import Optional
 
@@ -12,6 +13,8 @@ import httpx
 
 from app.config import settings
 from app.database import get_redis
+
+logger = logging.getLogger(__name__)
 
 
 FAQ = {
@@ -235,10 +238,21 @@ class ChatbotService:
             async with httpx.AsyncClient(timeout=settings.OLLAMA_TIMEOUT_SECONDS) as client:
                 resp = await client.post(f"{settings.OLLAMA_BASE_URL}/api/generate", json=payload)
                 if resp.status_code != 200:
+                    logger.warning(
+                        "Ollama returned HTTP %s for model '%s': %s",
+                        resp.status_code, settings.OLLAMA_MODEL, resp.text[:200],
+                    )
                     return None
                 text = (resp.json().get("response") or "").strip()
                 return text[:2000] if text else None
-        except Exception:
+        except httpx.ConnectError:
+            logger.error("Cannot connect to Ollama at %s — is it running?", settings.OLLAMA_BASE_URL)
+            return None
+        except httpx.TimeoutException:
+            logger.warning("Ollama timed out after %ss for model '%s'", settings.OLLAMA_TIMEOUT_SECONDS, settings.OLLAMA_MODEL)
+            return None
+        except Exception as exc:
+            logger.exception("Unexpected error calling Ollama: %s", exc)
             return None
 
     async def process(

@@ -7,6 +7,8 @@ import com.amenbank.service.AuditService;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.scheduling.annotation.Async;
+import org.springframework.security.core.Authentication;
+import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.stereotype.Service;
 import org.springframework.web.context.request.RequestContextHolder;
 import org.springframework.web.context.request.ServletRequestAttributes;
@@ -37,8 +39,22 @@ public class AuditServiceImpl implements AuditService {
             log.debug("Could not capture request metadata for audit log: {}", e.getMessage());
         }
 
+        // Determine actor type from current security context (propagated via DelegatingSecurityContextExecutor)
+        AuditActorType actorType = AuditActorType.USER;
+        try {
+            Authentication auth = SecurityContextHolder.getContext().getAuthentication();
+            if (auth != null) {
+                boolean isAdmin = auth.getAuthorities().stream()
+                        .anyMatch(a -> a.getAuthority().startsWith("ROLE_") &&
+                                a.getAuthority().contains("ADMIN"));
+                if (isAdmin) actorType = AuditActorType.ADMIN;
+            }
+        } catch (Exception e) {
+            log.debug("Could not determine actor type for audit log: {}", e.getMessage());
+        }
+
         AuditLog audit = AuditLog.builder()
-                .actorType(AuditActorType.USER)
+                .actorType(actorType)
                 .actorEmail(actorEmail)
                 .action(action)
                 .entityType(entityType)
@@ -51,7 +67,7 @@ public class AuditServiceImpl implements AuditService {
                 .build();
 
         auditLogRepository.save(audit);
-        log.debug("AUDIT [{}] entity={}/{} actor={}", action, entityType, entityId, actorEmail);
+        log.debug("AUDIT [{}] entity={}/{} actor={} type={}", action, entityType, entityId, actorEmail, actorType);
     }
 
     @Override

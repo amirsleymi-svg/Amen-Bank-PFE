@@ -48,6 +48,13 @@ public class Admin {
     @Builder.Default
     private Boolean active = true;
 
+    @Column(name = "failed_login_attempts", nullable = false)
+    @Builder.Default
+    private Integer failedLoginAttempts = 0;
+
+    @Column(name = "locked_until")
+    private LocalDateTime lockedUntil;
+
     @Column(name = "last_login_at")
     private LocalDateTime lastLoginAt;
 
@@ -70,5 +77,9 @@ public class Admin {
 
     public String getFullName() {
         return firstName + " " + lastName;
+    }
+
+    public boolean isAccountNonLocked() {
+        return lockedUntil == null || lockedUntil.isBefore(java.time.LocalDateTime.now());
     }
 }

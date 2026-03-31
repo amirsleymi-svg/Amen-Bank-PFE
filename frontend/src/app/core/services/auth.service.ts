@@ -25,7 +25,7 @@ export class AuthService {
   readonly isLoggedIn   = computed(() => !!this._currentUser());
   readonly isAdmin      = computed(() =>
     this._currentUser()?.roles?.some(r =>
-      ['ROLE_SUPER_ADMIN','ROLE_ADMIN','ROLE_AUDITOR'].includes(r)) ?? false
+      r === 'ROLE_ADMIN') ?? false
   );
 
   constructor(private http: HttpClient, private router: Router) {}
@@ -85,8 +85,21 @@ export class AuthService {
     return this.http.post<ApiResponse<any>>(`${this.API}/totp/setup`, {});
   }
 
-  enableTotp(totpCode: string): Observable<ApiResponse<void>> {
-    return this.http.post<ApiResponse<void>>(`${this.API}/totp/enable?totpCode=${totpCode}`, {});
+  enableTotp(totpCode: string): Observable<ApiResponse<string[]>> {
+    return this.http.post<ApiResponse<string[]>>(`${this.API}/totp/enable?totpCode=${totpCode}`, {});
+  }
+
+  disableTotp(totpCode: string): Observable<ApiResponse<void>> {
+    return this.http.post<ApiResponse<void>>(`${this.API}/totp/disable?totpCode=${totpCode}`, {});
+  }
+
+  changePassword(currentPassword: string, newPassword: string, totpCode: string): Observable<ApiResponse<void>> {
+    return this.http.post<ApiResponse<void>>(`${this.API}/password/change`,
+      { currentPassword, newPassword, totpCode });
+  }
+
+  revokeAllSessions(): Observable<ApiResponse<void>> {
+    return this.http.post<ApiResponse<void>>(`${this.API}/sessions/revoke-all`, {});
   }
 
   // ─── Password ─────────────────────────────────────────────────────

@@ -7,7 +7,7 @@
         <span class="logo-text">Amen Bank</span>
       </div>
       <h1 class="brand-tagline">Activez<br><span class="gradient-text">votre compte</span></h1>
-      <p class="brand-sub">Félicitations ! Votre demande d'ouverture de compte a été approuvée par nos administrateurs. Veuillez maintenant définir un mot de passe sécurisé pour accéder à votre espace client.</p>
+      <p class="brand-sub">Votre demande d'ouverture de compte a été approuvée par nos administrateurs. Cliquez sur le lien reçu par email pour activer votre accès avec le mot de passe que vous avez choisi.</p>
 
       <ul class="brand-features">
         <li class="feature-item">
@@ -34,18 +34,27 @@
   <main class="auth-form-panel">
     <div class="auth-form-container">
 
+      <!-- Loading State -->
+      @if (isLoading) {
+        <div class="loading-state">
+          <div class="loading-icon-wrap">⏳</div>
+          <h2>Activation en cours…</h2>
+          <p>Veuillez patienter pendant que nous activons votre compte.</p>
+        </div>
+      }
+
       <!-- Success State -->
-      @if (success) {
+      @if (!isLoading && success) {
         <div class="success-state">
           <div class="success-icon-wrap">🎉</div>
           <h2>Compte activé !</h2>
           <p>
-            Votre mot de passe a été enregistré avec succès.<br>
+            Votre compte a été activé avec succès.<br>
             Vous faites maintenant partie de l'expérience <strong>Amen Bank</strong>.
           </p>
           <div class="success-info">
             <span>🚀</span>
-            <span>Vous pouvez maintenant vous connecter à votre espace sécurisé.</span>
+            <span>Connectez-vous avec l'email et le mot de passe que vous avez choisis lors de votre inscription.</span>
           </div>
           <a routerLink="/auth/login" class="btn-primary" id="goto-login">
             Me connecter maintenant
@@ -53,90 +62,19 @@
         </div>
       }
 
-      <!-- Form State -->
-      @if (!success) {
+      <!-- Error State -->
+      @if (!isLoading && errorMessage) {
         <div class="form-header">
-          <div class="form-badge">Étape finale</div>
-          <h2 class="form-title">Définissez votre mot de passe</h2>
-          <p class="form-subtitle">
-            Choisissez un mot de passe robuste pour protéger vos accès.
-          </p>
+          <div class="form-badge error">Activation échouée</div>
+          <h2 class="form-title">Lien invalide</h2>
         </div>
-
-        @if (errorMessage) {
-          <div class="error-alert" role="alert" id="error-message">
-            {{ errorMessage }}
-            @if (errorMessage.includes('expiré') || errorMessage.includes('invalide')) {
-              <br><br>
-              <a routerLink="/auth/register" class="alert-link">Faire une nouvelle demande →</a>
-            }
-          </div>
-        }
-
-        <form [formGroup]="form" (ngSubmit)="activate()" novalidate>
-
-          <!-- Password -->
-          <div class="form-group" [class.has-error]="f['password'].invalid && f['password'].touched">
-            <label for="password-input">Nouveau mot de passe</label>
-            <div class="input-wrapper">
-              <span class="input-icon">🔒</span>
-              <input
-                id="password-input"
-                type="password"
-                formControlName="password"
-                placeholder="••••••••"
-                autocomplete="new-password"
-                class="form-input"
-              />
-            </div>
-            
-            <div class="password-check-list">
-              @for (req of passwordRequirements; track req.label) {
-                <div class="check-item" [class.met]="req.met">
-                   <span class="check-icon">{{ req.met ? '✓' : '○' }}</span>
-                   <span class="check-label">{{ req.label }}</span>
-                </div>
-              }
-            </div>
-          </div>
-
-          <!-- Confirm Password -->
-          <div class="form-group" [class.has-error]="(f['confirmPassword'].invalid && f['confirmPassword'].touched) || mismatch">
-            <label for="confirm-password-input">Confirmer le mot de passe</label>
-            <div class="input-wrapper">
-              <span class="input-icon">🔒</span>
-              <input
-                id="confirm-password-input"
-                type="password"
-                formControlName="confirmPassword"
-                placeholder="••••••••"
-                autocomplete="new-password"
-                class="form-input"
-              />
-            </div>
-            @if (f['confirmPassword'].touched && f['confirmPassword'].errors?.['required']) {
-              <span class="field-error">Veuillez confirmer votre mot de passe</span>
-            }
-            @if (mismatch) {
-              <span class="field-error">Les mots de passe ne correspondent pas</span>
-            }
-          </div>
-
-          <!-- Submit -->
-          <button
-            id="activate-btn"
-            type="submit"
-            class="btn-primary btn-full"
-            [disabled]="isLoading || form.invalid">
-            @if (!isLoading) {
-              <span>🚀 Activer mon compte</span>
-            } @else {
-              <span class="btn-spinner">Activation en cours…</span>
-            }
-          </button>
-
-        </form>
-
+        <div class="error-alert" role="alert" id="error-message">
+          {{ errorMessage }}
+          @if (errorMessage.includes('expiré') || errorMessage.includes('invalide')) {
+            <br><br>
+            <a routerLink="/auth/register" class="alert-link">Faire une nouvelle demande →</a>
+          }
+        </div>
         <p class="form-footer-text">
           Besoin d'aide ?
           <a href="mailto:support@amenbank.com">Contacter le support</a>

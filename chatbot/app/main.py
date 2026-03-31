@@ -3,6 +3,7 @@ Amen Bank — FastAPI Chatbot Service
 Handles banking FAQ, balance queries, recent transactions, credit advice.
 """
 
+import logging
 from contextlib import asynccontextmanager
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
@@ -10,6 +11,11 @@ from fastapi.middleware.cors import CORSMiddleware
 from app.routers import chat, health, analytics
 from app.config import settings
 from app.database import init_db
+
+logging.basicConfig(
+    level=logging.DEBUG if settings.DEBUG else logging.INFO,
+    format="%(asctime)s [%(levelname)s] %(name)s: %(message)s",
+)
 
 
 @asynccontextmanager

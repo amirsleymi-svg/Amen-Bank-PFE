@@ -4,10 +4,8 @@ import {
 import { CommonModule, DatePipe } from '@angular/common';
 import { ReactiveFormsModule, FormBuilder, FormGroup, Validators } from '@angular/forms';
 import { RouterModule } from '@angular/router';
-import { HttpClient } from '@angular/common/http';
 import { AuthService } from '../../core/services/auth.service';
 import { User } from '../../core/models/models';
-import { environment } from '../../../environments/environment';
 
 @Component({
   selector: 'app-profile',
@@ -47,11 +45,8 @@ export class ProfileComponent implements OnInit {
   showNew        = false;
   pwTotpDigits   = ['','','','','',''];
 
-  private readonly API = environment.apiUrl;
-
   constructor(
     private fb: FormBuilder,
-    private http: HttpClient,
     private authService: AuthService
   ) {}
 
@@ -87,9 +82,9 @@ export class ProfileComponent implements OnInit {
     this.totpError = '';
 
     this.authService.enableTotp(this.verifyCode).subscribe({
-      next: () => {
+      next: res => {
         this.totpEnableLoading = false;
-        this.backupCodes = this.generateMockBackupCodes(); // shown once
+        this.backupCodes = res.data ?? []; // real server-generated codes
         this.totpStep = 3;
       },
       error: err => {
@@ -102,11 +97,17 @@ export class ProfileComponent implements OnInit {
   }
 
   disable2FA(): void {
-    this.http.post(`${this.API}/auth/totp/disable`, {}).subscribe({
+    const code = prompt('Entrez votre code TOTP pour désactiver la 2FA :');
+    if (!code) return;
+    this.authService.disableTotp(code).subscribe({
       next: () => {
         this.disabling2fa  = false;
         this.globalSuccess = '2FA désactivée.';
         this.reloadUser();
+      },
+      error: err => {
+        this.globalSuccess = '';
+        alert(err.error?.message ?? 'Échec de la désactivation.');
       }
     });
   }
@@ -117,16 +118,18 @@ export class ProfileComponent implements OnInit {
 
   // ─── Password change ────────────────────────────────────────────
   changePassword(): void {
-    if (this.pwForm.invalid || this.pwTotpCode.length < 6) return;
+    if (this.pwForm.invalid) return;
+    const needsTotp = this.user?.totpEnabled;
+    if (needsTotp && this.pwTotpCode.length < 6) return;
     this.pwLoading = true;
     this.pwError   = '';
     this.pwSuccess = '';
 
-    this.http.post(`${this.API}/auth/password/change`, {
-      currentPassword: this.pwForm.value.currentPassword,
-      newPassword:     this.pwForm.value.newPassword,
-      totpCode:        this.pwTotpCode
-    }).subscribe({
+    this.authService.changePassword(
+      this.pwForm.value.currentPassword,
+      this.pwForm.value.newPassword,
+      this.pwTotpCode
+    ).subscribe({
       next: () => {
         this.pwLoading  = false;
         this.pwSuccess  = 'Mot de passe modifié avec succès.';
@@ -142,7 +145,7 @@ export class ProfileComponent implements OnInit {
 
   revokeAllSessions(): void {
     if (!confirm('Déconnecter tous les autres appareils ?')) return;
-    this.http.post(`${this.API}/auth/sessions/revoke-all`, {}).subscribe({
+    this.authService.revokeAllSessions().subscribe({
       next: () => { this.globalSuccess = 'Toutes les sessions ont été révoquées.'; }
     });
   }
@@ -234,18 +237,11 @@ export class ProfileComponent implements OnInit {
     a.download='amenbank-backup-codes.txt'; a.click();
   }
 
-  private generateMockBackupCodes(): string[] {
-    return Array.from({length:8},()=>
-      Math.random().toString(36).substring(2,6).toUpperCase()+'-'+
-      Math.random().toString(36).substring(2,6).toUpperCase()
-    );
-  }
-
   private triggerShake(): void {
     this.shaking=true; setTimeout(()=>this.shaking=false,600);
   }
 
   roleLabel(role: string): string {
-    return ({ ROLE_USER:'Utilisateur', ROLE_SUPER_ADMIN:'Super Admin', ROLE_ADMIN:'Admin', ROLE_AUDITOR:'Auditeur' } as any)[role] ?? role;
+    return ({ ROLE_USER:'Utilisateur', ROLE_ADMIN:'Administrateur' } as any)[role] ?? role;
   }
 }

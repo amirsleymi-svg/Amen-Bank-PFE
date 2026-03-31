@@ -7,8 +7,7 @@
 INSERT INTO roles (name) VALUES
     ('ROLE_USER'),
     ('ROLE_SUPER_ADMIN'),
-    ('ROLE_ADMIN'),
-    ('ROLE_AUDITOR');
+    ('ROLE_ADMIN');
 
 -- ─── Permissions ─────────────────────────────────────────────────────
 INSERT INTO permissions (name, description) VALUES
@@ -62,20 +61,6 @@ WHERE r.name = 'ROLE_USER'
     'STANDING_ORDER_CREATE','STANDING_ORDER_CANCEL',
     'CREDIT_SIMULATE','CREDIT_APPLY',
     'KYC_SUBMIT','NOTIFICATION_READ','CHATBOT_USE'
-  );
-
--- ROLE_AUDITOR gets read-only access
-INSERT INTO role_permissions (role_id, permission_id)
-SELECT r.id, p.id
-FROM roles r, permissions p
-WHERE r.name = 'ROLE_AUDITOR'
-  AND p.name IN (
-    'ACCOUNT_READ','TRANSACTION_READ','TRANSACTION_EXPORT',
-    'TRANSFER_CREATE',
-    'CREDIT_SIMULATE','CREDIT_REVIEW',
-    'KYC_REVIEW',
-    'USER_READ','ADMIN_READ','AUDIT_READ',
-    'NOTIFICATION_READ','CHATBOT_USE','CHATBOT_ADMIN'
   );
 
 -- ROLE_ADMIN gets operational permissions

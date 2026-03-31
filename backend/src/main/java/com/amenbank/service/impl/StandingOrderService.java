@@ -1,6 +1,7 @@
 package com.amenbank.service.impl;
 
 import com.amenbank.dto.request.StandingOrderRequest;
+import com.amenbank.dto.request.UpdateStandingOrderRequest;
 import com.amenbank.dto.response.StandingOrderResponse;
 import com.amenbank.entity.*;
 import com.amenbank.enums.StandingOrderStatus;
@@ -59,6 +60,30 @@ public class StandingOrderService {
     public List<StandingOrderResponse> getUserOrders(Long userId) {
         return standingOrderRepository.findByUserId(userId)
                 .stream().map(this::toResponse).collect(Collectors.toList());
+    }
+
+    @Transactional
+    public StandingOrderResponse update(Long id, Long userId, UpdateStandingOrderRequest req) {
+        StandingOrder so = standingOrderRepository.findById(id)
+                .orElseThrow(() -> new ResourceNotFoundException("StandingOrder", id));
+        if (!so.getUser().getId().equals(userId))
+            throw new ForbiddenException("Not your standing order");
+        if (so.getStatus() != StandingOrderStatus.ACTIVE)
+            throw new BusinessException("Only ACTIVE standing orders can be modified", "INVALID_STATUS");
+
+        if (req.getAmount() != null) so.setAmount(req.getAmount());
+        if (req.getLabel() != null) so.setLabel(req.getLabel());
+        if (req.getFrequency() != null) so.setFrequency(req.getFrequency());
+        if (req.getStartDate() != null) {
+            so.setStartDate(req.getStartDate());
+            so.setNextRunDate(req.getStartDate());
+        }
+        so.setEndDate(req.getEndDate());
+
+        StandingOrder saved = standingOrderRepository.save(so);
+        auditService.log("STANDING_ORDER_UPDATED", "StandingOrder", saved.getId(),
+                so.getUser().getEmail(), "amount=" + so.getAmount() + " freq=" + so.getFrequency());
+        return toResponse(saved);
     }
 
     @Transactional

@@ -7,7 +7,7 @@
         <span class="logo-text">Amen Bank</span>
       </div>
       <h1 class="brand-tagline">Ouvrez votre compte<br><span class="gradient-text">en 2 minutes</span></h1>
-      <p class="brand-sub">Soumettez simplement votre adresse email. Notre équipe examinera votre demande et vous enverra un lien pour finaliser votre inscription.</p>
+      <p class="brand-sub">Soumettez votre email et choisissez votre mot de passe. Notre équipe examinera votre demande et vous enverra un lien pour activer votre compte.</p>
 
       <ul class="brand-features">
         @for (b of benefits; track b.text) {
@@ -55,14 +55,14 @@
           <div class="form-badge">Nouveau client</div>
           <h2 class="form-title">Demande d'ouverture de compte</h2>
           <p class="form-subtitle">
-            Aucun document requis à cette étape — seulement votre email.
+            Renseignez votre email et choisissez un mot de passe sécurisé.
           </p>
         </div>
 
         <div class="process-steps">
           <div class="step active">
             <span class="step-num">1</span>
-            <span class="step-label">Votre email</span>
+            <span class="step-label">Votre demande</span>
           </div>
           <div class="step-connector"></div>
           <div class="step">
@@ -104,25 +104,68 @@
             }
           </div>
 
-          <!-- Confirm Email -->
-          <div class="form-group" [class.has-error]="(f['confirmEmail'].invalid && f['confirmEmail'].touched) || mismatch">
-            <label for="confirm-email-input">Confirmer l'adresse email</label>
+          <!-- Password -->
+          <div class="form-group" [class.has-error]="f['password'].invalid && f['password'].touched">
+            <label for="password-input">Mot de passe</label>
             <div class="input-wrapper">
-              <span class="input-icon">✉️</span>
+              <span class="input-icon">🔒</span>
               <input
-                id="confirm-email-input"
-                type="email"
-                formControlName="confirmEmail"
-                placeholder="votre@email.com"
-                autocomplete="email"
+                id="password-input"
+                [type]="showPassword ? 'text' : 'password'"
+                formControlName="password"
+                placeholder="••••••••"
+                autocomplete="new-password"
                 class="form-input"
               />
+              <button type="button" class="toggle-btn" (click)="showPassword = !showPassword" tabindex="-1">
+                {{ showPassword ? '🙈' : '👁️' }}
+              </button>
             </div>
-            @if (f['confirmEmail'].touched && f['confirmEmail'].errors?.['required']) {
-              <span class="field-error">Veuillez confirmer votre email</span>
+            @if (f['password'].value) {
+              <div class="strength-bar-wrap">
+                <div class="strength-bar">
+                  <div
+                    class="strength-fill"
+                    [style.width.%]="passwordStrength * 25"
+                    [style.background]="strengthColors[passwordStrength - 1]">
+                  </div>
+                </div>
+                <span class="strength-label">{{ strengthLabels[passwordStrength - 1] }}</span>
+              </div>
+            }
+            @if (f['password'].touched && f['password'].errors?.['required']) {
+              <span class="field-error">Le mot de passe est requis</span>
+            }
+            @if (f['password'].touched && f['password'].errors?.['minlength']) {
+              <span class="field-error">Minimum 8 caractères</span>
+            }
+            @if (f['password'].touched && f['password'].errors?.['pattern']) {
+              <span class="field-error">Doit contenir majuscule, minuscule, chiffre et caractère spécial</span>
+            }
+          </div>
+
+          <!-- Confirm Password -->
+          <div class="form-group" [class.has-error]="(f['confirmPassword'].invalid && f['confirmPassword'].touched) || mismatch">
+            <label for="confirm-password-input">Confirmer le mot de passe</label>
+            <div class="input-wrapper">
+              <span class="input-icon">🔒</span>
+              <input
+                id="confirm-password-input"
+                [type]="showConfirm ? 'text' : 'password'"
+                formControlName="confirmPassword"
+                placeholder="••••••••"
+                autocomplete="new-password"
+                class="form-input"
+              />
+              <button type="button" class="toggle-btn" (click)="showConfirm = !showConfirm" tabindex="-1">
+                {{ showConfirm ? '🙈' : '👁️' }}
+              </button>
+            </div>
+            @if (f['confirmPassword'].touched && f['confirmPassword'].errors?.['required']) {
+              <span class="field-error">Veuillez confirmer votre mot de passe</span>
             }
             @if (mismatch) {
-              <span class="field-error">Les adresses email ne correspondent pas</span>
+              <span class="field-error">Les mots de passe ne correspondent pas</span>
             }
           </div>
 

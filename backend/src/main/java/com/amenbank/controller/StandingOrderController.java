@@ -1,6 +1,7 @@
 package com.amenbank.controller;
 
 import com.amenbank.dto.request.StandingOrderRequest;
+import com.amenbank.dto.request.UpdateStandingOrderRequest;
 import com.amenbank.dto.response.ApiResponse;
 import com.amenbank.dto.response.StandingOrderResponse;
 import com.amenbank.service.impl.StandingOrderService;
@@ -46,6 +47,17 @@ public class StandingOrderController {
             @AuthenticationPrincipal UserDetails ud) {
         var user = userDetailsService.loadUserEntityByUsername(ud.getUsername());
         return ResponseEntity.ok(ApiResponse.ok("Orders loaded", service.getUserOrders(user.getId())));
+    }
+
+    @PatchMapping("/{id}")
+    @PreAuthorize("hasAuthority('STANDING_ORDER_CREATE')")
+    @Operation(summary = "Update an active standing order")
+    public ResponseEntity<ApiResponse<StandingOrderResponse>> update(
+            @PathVariable Long id,
+            @Valid @RequestBody UpdateStandingOrderRequest req,
+            @AuthenticationPrincipal UserDetails ud) {
+        var user = userDetailsService.loadUserEntityByUsername(ud.getUsername());
+        return ResponseEntity.ok(ApiResponse.ok("Standing order updated", service.update(id, user.getId(), req)));
     }
 
     @DeleteMapping("/{id}")

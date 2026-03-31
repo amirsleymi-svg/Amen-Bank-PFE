@@ -6,13 +6,12 @@ import { ApiResponse, PageResponse } from '../models/models';
 
 export interface RegistrationRequestDto {
   email: string;
-  confirmEmail: string;
+  password: string;
+  confirmPassword: string;
 }
 
 export interface ActivateAccountRequest {
   token: string;
-  password: string;
-  confirmPassword: string;
 }
 
 export interface CreateAccountFromRequestDto {

@@ -78,3 +78,46 @@
 .modal-footer-row{display:flex;gap:10px;margin-top:1.25rem}
 .btn-outline{height:42px;padding:0 1rem;background:transparent;color:var(--ab-primary);border:1.5px solid var(--ab-primary);border-radius:9px;font-size:.875rem;font-weight:600;cursor:pointer;&:hover{background:rgba(10,63,107,.06)}}
 .btn-danger{height:42px;padding:0 1rem;background:var(--ab-danger);color:white;border:none;border-radius:9px;font-size:.875rem;font-weight:600;cursor:pointer;&:hover{background:#A32D2D}}
+.btn-primary{display:inline-flex;align-items:center;gap:6px;height:38px;padding:0 1.1rem;background:var(--ab-primary);color:white;border:none;border-radius:9px;font-size:.875rem;font-weight:600;cursor:pointer;transition:background .15s;&:hover{background:#1565A0}&:disabled{opacity:.55;cursor:not-allowed}}
+/* Separator */
+.anav-separator{height:1px;background:rgba(255,255,255,.08);margin:.5rem .75rem}
+.anav-badge.admin-badge{background:rgba(200,168,75,.2);color:var(--ab-accent)}
+/* Roles view */
+.section-label{font-size:.72rem;font-weight:700;text-transform:uppercase;letter-spacing:.08em;color:var(--ab-muted);margin-bottom:.75rem}
+.roles-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(280px,1fr));gap:1rem;margin-bottom:.5rem}
+.role-card{background:var(--ab-surface);border:1px solid var(--ab-border);border-radius:14px;padding:1.1rem 1.25rem}
+.role-card-header{display:flex;align-items:center;justify-content:space-between;margin-bottom:.85rem}
+.role-name-badge{font-size:.78rem;font-weight:700;padding:4px 12px;border-radius:20px;
+  &.rn-super_admin{background:#FFF0D9;color:#8B4C00}
+  &.rn-admin{background:#EEF4FB;color:var(--ab-primary)}
+  &.rn-auditor{background:rgba(27,122,78,.1);color:var(--ab-success)}
+  &.rn-user,&.rn-client{background:#F4F6F9;color:var(--ab-muted)}
+}
+.perm-count{font-size:.75rem;color:var(--ab-muted);font-weight:500}
+.perm-list{display:flex;flex-wrap:wrap;gap:5px}
+.perm-tag{font-size:.68rem;font-weight:600;background:#F4F6F9;color:var(--ab-primary);padding:3px 8px;border-radius:5px;letter-spacing:.02em}
+/* Admin table */
+.admin-av{background:#7B3F9E}
+.role-pill{font-size:.72rem;font-weight:700;padding:3px 10px;border-radius:20px;white-space:nowrap;
+  &.rp-super_admin{background:#FFF0D9;color:#8B4C00}
+  &.rp-admin{background:#EEF4FB;color:var(--ab-primary)}
+  &.rp-auditor{background:rgba(27,122,78,.1);color:var(--ab-success)}
+}
+/* Create admin modal */
+.create-admin-modal{max-width:520px}
+.modal-header-row{display:flex;align-items:center;justify-content:space-between;margin-bottom:1.5rem;h3{font-size:1.1rem;font-weight:700;margin:0}}
+.modal-close-btn{width:32px;height:32px;border:none;background:var(--ab-bg);border-radius:8px;cursor:pointer;display:flex;align-items:center;justify-content:center;color:var(--ab-muted);&:hover{background:var(--ab-border)}}
+.error-banner{background:#FEF0EF;color:var(--ab-danger);border:1px solid rgba(197,55,42,.2);border-radius:9px;padding:.7rem 1rem;font-size:.855rem;margin-bottom:1rem}
+.admin-form{display:flex;flex-direction:column;gap:1rem}
+.form-row-2{display:grid;grid-template-columns:1fr 1fr;gap:.75rem}
+.form-field{display:flex;flex-direction:column;gap:5px;
+  label{font-size:.8rem;font-weight:600;color:var(--ab-text)}
+  input,select{height:40px;padding:0 12px;border:1.5px solid var(--ab-border);border-radius:9px;font-size:.875rem;outline:none;background:#FAFBFC;&:focus{border-color:var(--ab-primary)}}
+  &.has-error input,&.has-error select{border-color:var(--ab-danger)}
+}
+.form-select{height:40px;padding:0 10px;border:1.5px solid var(--ab-border);border-radius:9px;font-size:.875rem;outline:none;background:#FAFBFC;&:focus{border-color:var(--ab-primary)}}
+.field-error{font-size:.75rem;color:var(--ab-danger)}
+.req{color:var(--ab-danger)}
+.role-hint{display:flex;align-items:center;gap:6px;font-size:.78rem;color:var(--ab-primary);background:#EEF4FB;padding:6px 10px;border-radius:7px;margin-top:4px;&.auditor{color:var(--ab-success);background:rgba(27,122,78,.08)}}
+.spinner-inline{display:inline-block;width:16px;height:16px;border:2px solid rgba(255,255,255,.4);border-top-color:white;border-radius:50%;animation:spin .6s linear infinite}
+@keyframes spin{to{transform:rotate(360deg)}}

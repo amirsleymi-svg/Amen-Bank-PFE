@@ -41,6 +41,14 @@
         <svg width="18" height="18" viewBox="0 0 24 24" fill="none"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z" stroke="currentColor" stroke-width="1.75"/><path d="M14 2v6h6M8 13h8M8 17h5" stroke="currentColor" stroke-width="1.75" stroke-linecap="round"/></svg>
         Journaux d'audit
       </button>
+
+      <div class="anav-separator"></div>
+
+      <button class="anav-item" [class.active]="activeView==='roles'" (click)="loadRoles()">
+        <svg width="18" height="18" viewBox="0 0 24 24" fill="none"><circle cx="12" cy="8" r="4" stroke="currentColor" stroke-width="1.75"/><path d="M4 20c0-4 3.6-7 8-7s8 3 8 7" stroke="currentColor" stroke-width="1.75" stroke-linecap="round"/><path d="M16 3.5A4 4 0 0 1 16 12.5" stroke="currentColor" stroke-width="1.75" stroke-linecap="round"/><path d="M19 6h3M19 9h3" stroke="currentColor" stroke-width="1.75" stroke-linecap="round"/></svg>
+        Gestion des rôles
+        <span class="anav-badge admin-badge">Admin</span>
+      </button>
     </nav>
 
     <div class="admin-sidebar-footer">
@@ -84,6 +92,7 @@
         <button class="qa-btn" (click)="loadKyc()">Traiter les KYC →</button>
         <button class="qa-btn" (click)="loadCredits()">Examiner les crédits →</button>
         <button class="qa-btn" (click)="loadAuditLogs()">Voir les journaux →</button>
+        <button class="qa-btn" (click)="loadRoles()">Gestion des rôles →</button>
       </div>
     </ng-container>
 
@@ -113,11 +122,11 @@
               <td><span class="status-pill" [class]="'st-'+kyc.status.toLowerCase()">{{ statusLabel(kyc.status) }}</span></td>
               <td>
                 <div class="action-btns" *ngIf="kyc.status==='PENDING' || kyc.status==='REVIEWING'">
-                  <button class="btn-sm-success" (click)="approveKyc(kyc.id)" title="Approuver">
+                  <button class="btn-sm-success" (click)="approveKyc(kyc.id)">
                     <svg width="13" height="13" viewBox="0 0 24 24" fill="none"><path d="M20 6L9 17l-5-5" stroke="white" stroke-width="2.5" stroke-linecap="round"/></svg>
                     Approuver
                   </button>
-                  <button class="btn-sm-danger" (click)="openRejectModal('kyc', kyc.id)" title="Rejeter">
+                  <button class="btn-sm-danger" (click)="openRejectModal('kyc', kyc.id)">
                     <svg width="13" height="13" viewBox="0 0 24 24" fill="none"><path d="M18 6L6 18M6 6l12 12" stroke="white" stroke-width="2.5" stroke-linecap="round"/></svg>
                     Rejeter
                   </button>
@@ -255,12 +264,115 @@
       </div>
     </ng-container>
 
-    <!-- Onboarding View -->
+    <!-- ══ ONBOARDING ══ -->
     <ng-container *ngIf="activeView === 'onboarding'">
       <app-onboarding-requests></app-onboarding-requests>
     </ng-container>
-  </main>
 
+    <!-- ══ GESTION DES RÔLES ══ -->
+    <ng-container *ngIf="activeView==='roles'">
+      <div class="admin-page-header">
+        <h2>Gestion des rôles &amp; administrateurs</h2>
+        <button class="btn-primary" (click)="openCreateAdminModal()">
+          <svg width="15" height="15" viewBox="0 0 24 24" fill="none"><path d="M12 5v14M5 12h14" stroke="currentColor" stroke-width="2.5" stroke-linecap="round"/></svg>
+          Créer un administrateur
+        </button>
+      </div>
+
+      <!-- Roles overview -->
+      <div class="section-label">Rôles disponibles</div>
+      <div class="roles-grid">
+        <div class="role-card" *ngFor="let role of roleList">
+          <div class="role-card-header">
+            <span class="role-name-badge" [class]="'rn-'+role.name.toLowerCase().replace('role_','')">
+              {{ adminRoleLabel(role.name.replace('ROLE_','')) || role.name }}
+            </span>
+            <span class="perm-count">{{ role.permissions.length }} permissions</span>
+          </div>
+          <div class="perm-list">
+            <span class="perm-tag" *ngFor="let p of role.permissions">{{ p.name }}</span>
+          </div>
+        </div>
+        <div class="empty-state" *ngIf="roleList.length===0 && !tableLoading">
+          <p>Aucun rôle trouvé</p>
+        </div>
+      </div>
+
+      <!-- Admins table -->
+      <div class="section-label" style="margin-top:2rem">Administrateurs</div>
+      <div class="data-table-wrap">
+        <table class="data-table">
+          <thead>
+            <tr>
+              <th>Administrateur</th>
+              <th>Email</th>
+              <th>Rôle</th>
+              <th>2FA</th>
+              <th>Dernière connexion</th>
+              <th>Statut</th>
+              <th>Actions</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr *ngFor="let a of adminList">
+              <td>
+                <div class="user-cell">
+                  <div class="mini-avatar admin-av">{{ a.firstName?.charAt(0) }}{{ a.lastName?.charAt(0) }}</div>
+                  <div>
+                    <strong>{{ a.firstName }} {{ a.lastName }}</strong>
+                    <span class="muted-sm">&#64;{{ a.username }}</span>
+                  </div>
+                </div>
+              </td>
+              <td class="muted">{{ a.email }}</td>
+              <td>
+                <span class="role-pill" [class]="'rp-'+a.role?.toLowerCase()">
+                  {{ adminRoleLabel(a.role) }}
+                </span>
+              </td>
+              <td>
+                <span class="tfa-badge" [class.enabled]="a.totpEnabled">
+                  {{ a.totpEnabled ? '✓ On' : '✗ Off' }}
+                </span>
+              </td>
+              <td class="muted">{{ a.lastLoginAt | date:'dd/MM/yyyy HH:mm' }}</td>
+              <td>
+                <span class="status-pill" [class]="a.active ? 'st-active' : 'st-suspended'">
+                  {{ a.active ? 'Actif' : 'Inactif' }}
+                </span>
+              </td>
+              <td>
+                <div class="action-btns">
+                  <button class="btn-sm-outline" (click)="openChangeRoleModal(a)" title="Changer le rôle">
+                    <svg width="13" height="13" viewBox="0 0 24 24" fill="none"><path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7" stroke="currentColor" stroke-width="2" stroke-linecap="round"/><path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z" stroke="currentColor" stroke-width="2" stroke-linecap="round"/></svg>
+                    Rôle
+                  </button>
+                  <button class="btn-sm-danger" *ngIf="a.active" (click)="toggleAdmin(a)" title="Désactiver">
+                    Désactiver
+                  </button>
+                  <button class="btn-sm-success" *ngIf="!a.active" (click)="toggleAdmin(a)" title="Activer">
+                    Activer
+                  </button>
+                </div>
+              </td>
+            </tr>
+          </tbody>
+        </table>
+
+        <div class="empty-state" *ngIf="adminList.length===0 && !tableLoading">
+          <svg width="40" height="40" viewBox="0 0 24 24" fill="none"><circle cx="12" cy="8" r="4" stroke="var(--ab-muted)" stroke-width="1.5"/><path d="M4 20c0-4 3.6-7 8-7s8 3 8 7" stroke="var(--ab-muted)" stroke-width="1.5" stroke-linecap="round"/></svg>
+          <p>Aucun administrateur trouvé</p>
+        </div>
+
+        <div class="pagination" *ngIf="adminTotalPages > 1">
+          <button [disabled]="adminPage===0" (click)="changeAdminPage(adminPage-1)">← Préc.</button>
+          <span>{{ adminPage+1 }} / {{ adminTotalPages }}</span>
+          <button [disabled]="adminPage>=adminTotalPages-1" (click)="changeAdminPage(adminPage+1)">Suiv. →</button>
+        </div>
+      </div>
+    </ng-container>
+
+  </main>
 </div>
 
 <!-- ── Rejection modal ──────────────────────────────────────────────── -->
@@ -273,6 +385,90 @@
     <div class="modal-footer-row">
       <button class="btn-outline" (click)="closeRejectModal()">Annuler</button>
       <button class="btn-danger" (click)="confirmReject()">Confirmer le rejet</button>
+    </div>
+  </div>
+</div>
+
+<!-- ── Create admin modal ───────────────────────────────────────────── -->
+<div class="modal-backdrop" *ngIf="createAdminModalOpen" (click)="closeCreateAdminModal()">
+  <div class="modal-box create-admin-modal" (click)="$event.stopPropagation()">
+    <div class="modal-header-row">
+      <h3>Créer un administrateur</h3>
+      <button class="modal-close-btn" (click)="closeCreateAdminModal()">
+        <svg width="18" height="18" viewBox="0 0 24 24" fill="none"><path d="M18 6L6 18M6 6l12 12" stroke="currentColor" stroke-width="2" stroke-linecap="round"/></svg>
+      </button>
+    </div>
+
+    <div class="error-banner" *ngIf="createAdminError">{{ createAdminError }}</div>
+
+    <form [formGroup]="createAdminForm" (ngSubmit)="submitCreateAdmin()" class="admin-form" novalidate>
+
+      <div class="form-row-2">
+        <div class="form-field" [class.has-error]="fieldError('firstName')">
+          <label>Prénom <span class="req">*</span></label>
+          <input formControlName="firstName" placeholder="Ex: Mohamed" />
+          <span class="field-error" *ngIf="fieldError('firstName')">Prénom requis</span>
+        </div>
+        <div class="form-field" [class.has-error]="fieldError('lastName')">
+          <label>Nom <span class="req">*</span></label>
+          <input formControlName="lastName" placeholder="Ex: Ben Ali" />
+          <span class="field-error" *ngIf="fieldError('lastName')">Nom requis</span>
+        </div>
+      </div>
+
+      <div class="form-field" [class.has-error]="fieldError('username')">
+        <label>Identifiant <span class="req">*</span></label>
+        <input formControlName="username" placeholder="Ex: m.benali" autocomplete="username" />
+        <span class="field-error" *ngIf="fieldError('username')">Identifiant requis (3–50 caractères)</span>
+      </div>
+
+      <div class="form-field" [class.has-error]="fieldError('email')">
+        <label>Email <span class="req">*</span></label>
+        <input formControlName="email" type="email" placeholder="admin@amenbank.tn" autocomplete="email" />
+        <span class="field-error" *ngIf="fieldError('email')">Email invalide</span>
+      </div>
+
+      <div class="form-field" [class.has-error]="fieldError('password')">
+        <label>Mot de passe <span class="req">*</span></label>
+        <input formControlName="password" type="password" placeholder="Min. 8 caractères" autocomplete="new-password" />
+        <span class="field-error" *ngIf="fieldError('password')">Au moins 8 caractères</span>
+      </div>
+
+      <div class="form-field">
+        <label>Rôle <span class="req">*</span></label>
+        <select formControlName="role" class="form-select">
+          <option *ngFor="let r of ADMIN_ROLES" [value]="r">{{ adminRoleLabel(r) }}</option>
+        </select>
+
+      </div>
+
+      <div class="modal-footer-row">
+        <button type="button" class="btn-outline" (click)="closeCreateAdminModal()">Annuler</button>
+        <button type="submit" class="btn-primary" [disabled]="createAdminLoading">
+          <span *ngIf="!createAdminLoading">Créer l'administrateur</span>
+          <span *ngIf="createAdminLoading" class="spinner-inline"></span>
+        </button>
+      </div>
+    </form>
+  </div>
+</div>
+
+<!-- ── Change role modal ─────────────────────────────────────────────── -->
+<div class="modal-backdrop" *ngIf="changeRoleModalOpen" (click)="closeChangeRoleModal()">
+  <div class="modal-box" (click)="$event.stopPropagation()" style="max-width:380px">
+    <h3>Modifier le rôle</h3>
+    <p style="font-size:.875rem;color:var(--ab-muted);margin:0 0 1.25rem">
+      Administrateur : <strong>{{ changeRoleTarget?.firstName }} {{ changeRoleTarget?.lastName }}</strong>
+    </p>
+    <div class="form-field">
+      <label>Nouveau rôle</label>
+      <select [(ngModel)]="changeRoleValue" class="form-select">
+        <option *ngFor="let r of ADMIN_ROLES" [value]="r">{{ adminRoleLabel(r) }}</option>
+      </select>
+    </div>
+    <div class="modal-footer-row">
+      <button class="btn-outline" (click)="closeChangeRoleModal()">Annuler</button>
+      <button class="btn-primary" (click)="confirmChangeRole()">Confirmer</button>
     </div>
   </div>
 </div>

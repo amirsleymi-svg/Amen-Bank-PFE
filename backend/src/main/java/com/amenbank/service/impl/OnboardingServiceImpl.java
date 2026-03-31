@@ -75,11 +75,10 @@ public class OnboardingServiceImpl implements OnboardingService {
     @Transactional
     public RegistrationRequestResponse submitRegistrationRequest(RegistrationRequestDto dto, String ipAddress) {
         String normalizedEmail = dto.getEmail().trim().toLowerCase(Locale.ROOT);
-        String normalizedConfirmEmail = dto.getConfirmEmail().trim().toLowerCase(Locale.ROOT);
 
-        // Validate emails match
-        if (!normalizedEmail.equals(normalizedConfirmEmail)) {
-            throw new BusinessException("Email addresses do not match", "EMAIL_MISMATCH");
+        // Validate passwords match
+        if (!dto.getPassword().equals(dto.getConfirmPassword())) {
+            throw new BusinessException("Passwords do not match", "PASSWORD_MISMATCH");
         }
 
         // Check for duplicate request
@@ -94,6 +93,7 @@ public class OnboardingServiceImpl implements OnboardingService {
 
         RegistrationRequest request = RegistrationRequest.builder()
                 .email(normalizedEmail)
+                .passwordHash(passwordEncoder.encode(dto.getPassword()))
                 .status(RegistrationStatus.PENDING)
                 .ipAddress(ipAddress)
                 .build();
@@ -152,8 +152,8 @@ public class OnboardingServiceImpl implements OnboardingService {
             username = baseUsername + suffix++;
         }
 
-        // Create user account (disabled — no password yet, random placeholder)
-        String tempHash = passwordEncoder.encode(UUID.randomUUID().toString());
+        // Use the password hash the client chose during the registration request
+        String tempHash = request.getPasswordHash();
 
         // Assign ROLE_CLIENT
         Role clientRole = roleRepository.findByName("ROLE_CLIENT")
@@ -238,11 +238,6 @@ public class OnboardingServiceImpl implements OnboardingService {
     @Override
     @Transactional
     public void activateAccount(ActivateAccountRequest request) {
-        // Validate passwords match
-        if (!request.getPassword().equals(request.getConfirmPassword())) {
-            throw new BusinessException("Passwords do not match", "PASSWORD_MISMATCH");
-        }
-
         // Find and validate token
         ActivationToken token = activationTokenRepository.findByToken(request.getToken())
                 .orElseThrow(() -> new BusinessException("Invalid activation link", "INVALID_TOKEN"));
@@ -255,9 +250,8 @@ public class OnboardingServiceImpl implements OnboardingService {
             );
         }
 
-        // Activate user
+        // Activate user — password was set during the registration request
         User user = token.getUser();
-        user.setPasswordHash(passwordEncoder.encode(request.getPassword()));
         user.setStatus(UserStatus.ACTIVE);
         user.setEmailVerified(true);
         userRepository.save(user);
